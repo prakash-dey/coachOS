@@ -1,4 +1,5 @@
 import { sendMagicLink } from "./actions";
+import { startDemo } from "@/app/demo/actions";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -20,11 +21,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         ? "That login link is invalid or has expired."
         : params.error === "access_inactive"
           ? "Your workspace access is currently inactive."
-          : null;
+          : params.error === "demo_unavailable"
+            ? "The demo could not be started. Please try again shortly."
+            : null;
 
   const successMessage =
     params.message === "check_email"
       ? "Check your email for your secure login link."
+      : params.message === "demo_ended"
+        ? "Demo ended. Sign in to return to your real workspace."
       : null;
 
   return (
@@ -72,6 +77,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Send login link
           </button>
         </form>
+
+        <div className="mt-6 border-t border-gray-200 pt-6">
+          <form action={startDemo}>
+            <button type="submit" className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-brand">
+              Explore with fictional data
+            </button>
+          </form>
+        </div>
       </section>
     </main>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { startDemo } from "@/app/demo/actions";
 
 export default function HeroSection() {
   return (
@@ -34,12 +35,11 @@ export default function HeroSection() {
               Start coaching for free
             </Link>
 
-            <Link
-              href="#preview"
-              className="inline-flex items-center justify-center rounded-xl border border-border bg-surface px-6 py-3.5 font-semibold transition hover:border-brand hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
-            >
-              See how it works
-            </Link>
+            <form action={startDemo}>
+              <button type="submit" className="inline-flex w-full items-center justify-center rounded-xl border border-border bg-surface px-6 py-3.5 font-semibold transition hover:border-brand hover:text-brand focus-visible:outline-2 focus-visible:outline-brand">
+                Explore live demo
+              </button>
+            </form>
           </div>
 
           <p className="mt-4 text-sm text-muted">

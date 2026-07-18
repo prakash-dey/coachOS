@@ -14,12 +14,17 @@ function Ring({ value, label }: { value: number; label: string }) {
   );
 }
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: workspace } = await supabase.from("workspaces").select("id, name").eq("owner_id", user.id).maybeSingle();
+  const { data: workspace } = await supabase.from("workspaces").select("id, name, is_demo").eq("owner_id", user.id).maybeSingle();
   if (!workspace) redirect("/onboarding");
 
   const monday = new Date();
@@ -43,9 +48,13 @@ export default async function DashboardPage() {
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
       <div className="mx-auto max-w-7xl">
+        {params.error === "demo_switch_failed" && <p role="alert" className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">We couldn’t end your current session, so demo mode was not started. Your workspace is unchanged.</p>}
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div><p className="text-xs font-bold uppercase tracking-[.2em] text-brand">Command center</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Good to see you.</h1><p className="mt-2 text-muted">Here’s the pulse of {workspace.name} this week.</p></div>
-          <Link href="/clients/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/15 transition hover:-translate-y-0.5 hover:bg-brand-strong">+ Add a client</Link>
+          <div className="flex flex-wrap gap-3">
+            {!workspace.is_demo && <Link href="/demo/switch" className="inline-flex min-h-11 items-center justify-center rounded-full border border-brand/25 bg-surface px-5 text-sm font-semibold text-brand transition hover:border-brand/50 hover:bg-brand/5">Explore demo</Link>}
+            <Link href="/clients/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/15 transition hover:-translate-y-0.5 hover:bg-brand-strong">+ Add a client</Link>
+          </div>
         </header>
 
         <section className="mt-8 grid gap-4 xl:grid-cols-[1.45fr_.8fr]">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import InviteClient from "./InviteClient";
 import { createClient } from "@/lib/supabase/server";
+import { previewDemoClient } from "@/app/demo/actions";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -34,7 +35,7 @@ export default async function ClientDetailPage({
 
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
-    .select("id")
+    .select("id, is_demo")
     .eq("owner_id", user.id)
     .maybeSingle();
 
@@ -66,6 +67,7 @@ export default async function ClientDetailPage({
   const createdDate = new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
   }).format(new Date(client.created_at));
+  const previewClient = previewDemoClient.bind(null, client.id);
 
   return (
     <main className="min-h-screen px-6 py-10">
@@ -85,6 +87,13 @@ export default async function ClientDetailPage({
             </p>
           </div>
           <div className="flex justify-between gap-2.5">
+            {workspace.is_demo && (
+              <form action={previewClient}>
+                <button type="submit" className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white">
+                  Preview as client
+                </button>
+              </form>
+            )}
             <Link
               href={`/clients/${client.id}/edit`}
               className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
@@ -127,10 +136,7 @@ export default async function ClientDetailPage({
             </div>
           </dl>
         </div>
-        <InviteClient
-          clientId={client.id}
-          canInvite={client.status === "active" && Boolean(client.email)}
-        />
+        {!workspace.is_demo && <InviteClient clientId={client.id} canInvite={client.status === "active" && Boolean(client.email)} />}
       </section>
     </main>
   );
