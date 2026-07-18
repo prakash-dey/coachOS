@@ -7,19 +7,19 @@ type LoginPageProps = {
   }>;
 };
 
-export default async function LoginPage({
-  searchParams,
-}: LoginPageProps) {
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
 
   const errorMessage =
-    params.error === "invalid_email"
-      ? "Enter a valid email address."
-      : params.error === "unable_to_send_link"
-        ? "We could not send the login link. Please try again."
-        : params.error === "missing_auth_code" ||
-            params.error === "authentication_failed"
-          ? "That login link is invalid or has expired."
+  params.error === "invalid_email"
+    ? "Enter a valid email address."
+    : params.error === "unable_to_send_link"
+      ? "We could not send the login link. Please try again."
+      : params.error === "missing_auth_code" ||
+          params.error === "authentication_failed"
+        ? "That login link is invalid or has expired."
+        : params.error === "access_inactive"
+          ? "Your workspace access is currently inactive."
           : null;
 
   const successMessage =
@@ -31,7 +31,7 @@ export default async function LoginPage({
     <main className="flex min-h-screen items-center justify-center px-6">
       <section className="w-full max-w-md">
         <p className="mb-2 text-sm font-medium">CoachOS</p>
-        <h1 className="text-3xl font-semibold">Coach login</h1>
+        <h1 className="text-3xl font-semibold">Sign in to CoachOS</h1>
 
         <p className="mt-3 text-gray-600">
           Enter your email and we’ll send you a secure login link.
