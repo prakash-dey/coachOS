@@ -8,15 +8,17 @@ export async function GET(request: NextRequest) {
     const safeNext = requestedNext.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/dashboard";
 
     if (!code) {
-        return NextResponse.redirect(new URL("/login?error=missing_auth_code", request.url));
+        const errorUrl = new URL(safeNext, request.url);
+        errorUrl.searchParams.set("error", "authentication_failed");
+        return NextResponse.redirect(errorUrl);
     }
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-        return NextResponse.redirect(
-            new URL("/login?error=authentication_failed", request.url),
-        );
+        const errorUrl = new URL(safeNext, request.url);
+        errorUrl.searchParams.set("error", "authentication_failed");
+        return NextResponse.redirect(errorUrl);
     }
 
     return NextResponse.redirect(new URL(safeNext, request.url));
