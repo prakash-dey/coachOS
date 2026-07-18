@@ -2,10 +2,7 @@ import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
-import {
-  acceptInvitation,
-  sendClientMagicLink,
-} from "./actions";
+import { acceptInvitation, sendClientMagicLink } from "./actions";
 
 type JoinPageProps = {
   params: Promise<{
@@ -23,25 +20,25 @@ export default async function JoinPage({
   searchParams,
 }: JoinPageProps) {
   const { token } = await params;
-  const query = await searchParams;
-
+  const query = await searchParams;  
   if (!/^[0-9a-f]{64}$/.test(token)) {
     notFound();
   }
 
   const supabase = await createClient();
 
-  const { data: invitations, error: invitationError } =
-    await supabase.rpc("preview_client_invitation", {
+  const { data: invitations, error: invitationError } = await supabase.rpc(
+    "preview_client_invitation",
+    {
       invitation_token: token,
-    });
+    },
+  );
 
   if (invitationError) {
     throw new Error("Unable to validate the invitation.");
   }
 
   const invitation = invitations?.[0];
-
   if (!invitation) {
     notFound();
   }
@@ -50,11 +47,9 @@ export default async function JoinPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const sendMagicLinkForInvitation =
-    sendClientMagicLink.bind(null, token);
+  const sendMagicLinkForInvitation = sendClientMagicLink.bind(null, token);
 
-  const acceptCurrentInvitation =
-    acceptInvitation.bind(null, token);
+  const acceptCurrentInvitation = acceptInvitation.bind(null, token);
 
   const errorMessage =
     query.error === "invalid_input"
@@ -108,9 +103,7 @@ export default async function JoinPage({
 
         {user ? (
           <div className="mt-8">
-            <p className="text-sm text-gray-600">
-              Signed in as {user.email}
-            </p>
+            <p className="text-sm text-gray-600">Signed in as {user.email}</p>
 
             <form action={acceptCurrentInvitation} className="mt-4">
               <button
@@ -122,15 +115,9 @@ export default async function JoinPage({
             </form>
           </div>
         ) : (
-          <form
-            action={sendMagicLinkForInvitation}
-            className="mt-8 space-y-4"
-          >
+          <form action={sendMagicLinkForInvitation} className="mt-8 space-y-4">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium"
-              >
+              <label htmlFor="email" className="block text-sm font-medium">
                 Invited email address
               </label>
 

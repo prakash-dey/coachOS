@@ -84,13 +84,20 @@ export default async function ClientDetailPage({
               {client.status} client
             </p>
           </div>
-
-          <Link
-            href={`/clients/${client.id}/edit`}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
-          >
-            Edit client
-          </Link>
+          <div className="flex justify-between gap-2.5">
+            <Link
+              href={`/clients/${client.id}/edit`}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
+            >
+              Edit client
+            </Link>
+            <Link
+              href={`/clients/${client.id}/check-ins`}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
+            >
+              View check-ins
+            </Link>
+          </div>
         </header>
 
         <div className="mt-8 overflow-hidden rounded-lg border border-gray-200">
