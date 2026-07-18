@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import InviteClient from "./InviteClient";
 import { createClient } from "@/lib/supabase/server";
 import { previewDemoClient } from "@/app/demo/actions";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -89,23 +90,11 @@ export default async function ClientDetailPage({
           <div className="flex justify-between gap-2.5">
             {workspace.is_demo && (
               <form action={previewClient}>
-                <button type="submit" className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white">
-                  Preview as client
-                </button>
+                <Button type="submit" size="sm">Preview as client</Button>
               </form>
             )}
-            <Link
-              href={`/clients/${client.id}/edit`}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
-            >
-              Edit client
-            </Link>
-            <Link
-              href={`/clients/${client.id}/check-ins`}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
-            >
-              View check-ins
-            </Link>
+            <ButtonLink href={`/clients/${client.id}/edit`} variant="secondary" size="sm">Edit client</ButtonLink>
+            <ButtonLink href={`/clients/${client.id}/check-ins`} variant="secondary" size="sm">View check-ins</ButtonLink>
           </div>
         </header>
 

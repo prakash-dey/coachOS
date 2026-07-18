@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { switchToDemo } from "@/app/demo/actions";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SwitchToDemoPage() {
@@ -27,13 +27,9 @@ export default async function SwitchToDemoPage() {
         </div>
 
         <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Link href="/dashboard" className="inline-flex min-h-11 items-center justify-center rounded-full border border-border px-5 text-sm font-semibold transition hover:border-brand/40">
-            Keep working
-          </Link>
+          <ButtonLink href="/dashboard" variant="secondary">Keep working</ButtonLink>
           <form action={switchToDemo}>
-            <button type="submit" className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/15 transition hover:-translate-y-0.5 hover:bg-brand-strong">
-              Sign out and enter demo
-            </button>
+            <Button type="submit" className="w-full">Sign out and enter demo</Button>
           </form>
         </div>
       </section>

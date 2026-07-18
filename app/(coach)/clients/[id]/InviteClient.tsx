@@ -1,6 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Button } from "@/app/components/ui/Button";
+import { Alert } from "@/app/components/ui/Feedback";
+import { Input } from "@/app/components/ui/FormControls";
 
 import {
   createInvitation,
@@ -69,22 +72,21 @@ export default function InviteClient({
       </p>
 
       <form action={formAction} className="mt-4">
-        <button
+        <Button
           type="submit"
           disabled={isPending}
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPending
             ? "Generating..."
             : state.status === "success"
               ? "Generate a new link"
               : "Generate invitation"}
-        </button>
+        </Button>
       </form>
 
       <div aria-live="polite">
         {state.status === "error" && (
-          <p className="mt-4 text-sm text-red-700">{state.message}</p>
+          <Alert tone="error" className="mt-4">{state.message}</Alert>
         )}
 
         {state.status === "success" && state.invitationUrl && (
@@ -99,21 +101,22 @@ export default function InviteClient({
             </label>
 
             <div className="mt-2 flex gap-2">
-              <input
+              <Input
                 id="invitationUrl"
                 type="text"
                 readOnly
                 value={state.invitationUrl}
-                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                className="mt-0 min-w-0 flex-1"
               />
 
-              <button
+              <Button
                 type="button"
                 onClick={copyInvitationLink}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
+                variant="secondary"
+                size="sm"
               >
                 {copyStatus === "copied" ? "Copied" : "Copy"}
-              </button>
+              </Button>
             </div>
 
             {copyStatus === "failed" && (

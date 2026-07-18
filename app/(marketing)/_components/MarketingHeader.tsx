@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { startDemo } from "@/app/demo/actions";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
 
 export default function MarketingHeader() {
   return (
@@ -21,23 +22,11 @@ export default function MarketingHeader() {
 
         <nav aria-label="Main navigation" className="flex items-center gap-3">
           <form action={startDemo}>
-            <button type="submit" className="hidden rounded-lg px-4 py-2 text-sm font-semibold text-brand transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand sm:inline-flex">
-              Explore demo
-            </button>
+            <Button type="submit" variant="ghost" size="sm" className="hidden rounded-lg sm:inline-flex">Explore demo</Button>
           </form>
-          <Link
-            href="/login"
-            className="hidden rounded-lg px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand sm:inline-flex"
-          >
-            Sign in
-          </Link>
+          <ButtonLink href="/login" variant="ghost" size="sm" className="hidden rounded-lg text-foreground sm:inline-flex">Sign in</ButtonLink>
 
-          <Link
-            href="/login"
-            className="inline-flex rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-          >
-            Start coaching
-          </Link>
+          <ButtonLink href="/login" size="sm" className="rounded-lg">Start coaching</ButtonLink>
         </nav>
       </div>
     </header>

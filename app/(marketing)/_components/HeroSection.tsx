@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { startDemo } from "@/app/demo/actions";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
 
 export default function HeroSection() {
   return (
@@ -28,17 +28,10 @@ export default function HeroSection() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center rounded-xl bg-brand px-6 py-3.5 font-semibold text-white transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-              Start coaching for free
-            </Link>
+            <ButtonLink href="/login" className="rounded-xl px-6 py-3.5">Start coaching for free</ButtonLink>
 
             <form action={startDemo}>
-              <button type="submit" className="inline-flex w-full items-center justify-center rounded-xl border border-border bg-surface px-6 py-3.5 font-semibold transition hover:border-brand hover:text-brand focus-visible:outline-2 focus-visible:outline-brand">
-                Explore live demo
-              </button>
+              <Button type="submit" variant="secondary" className="w-full rounded-xl px-6 py-3.5">Explore live demo</Button>
             </form>
           </div>
 
