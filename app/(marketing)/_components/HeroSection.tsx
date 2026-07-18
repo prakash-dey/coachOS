@@ -29,7 +29,7 @@ export default function HeroSection() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/signup"
+              href="/login"
               className="inline-flex items-center justify-center rounded-xl bg-brand px-6 py-3.5 font-semibold text-white transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Start coaching for free

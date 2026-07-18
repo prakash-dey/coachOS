@@ -33,7 +33,7 @@ export default function MarketingHeader() {
           </Link>
 
           <Link
-            href="/signup"
+            href="/login"
             className="inline-flex rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Start coaching
