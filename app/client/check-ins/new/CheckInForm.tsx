@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import imageCompression from "browser-image-compression";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { Field, Input, Select, Textarea } from "@/app/components/ui/FormControls";
 
 import { submitCheckIn } from "./actions";
 
@@ -80,19 +81,15 @@ export default function CheckInForm() {
 
   return (
     <form action={handleSubmit} className="mt-8 space-y-5">
-      <div>
-        <label htmlFor="progressPhoto" className="block text-sm font-medium">
-          This week’s progress photo
-        </label>
-
-        <input
+      <Field label="This week’s progress photo" htmlFor="progressPhoto">
+        <Input
           id="progressPhoto"
           name="progressPhoto"
           type="file"
           accept="image/jpeg,image/png,image/webp"
           required
           disabled={isSubmitting}
-          className="mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-60"
+          className="block text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
         />
 
         <p className="mt-2 text-sm text-gray-500">
@@ -105,14 +102,10 @@ export default function CheckInForm() {
             {photoError}
           </p>
         )}
-      </div>
+      </Field>
 
-      <div>
-        <label htmlFor="weightKg" className="block text-sm font-medium">
-          Current weight in kilograms
-        </label>
-
-        <input
+      <Field label="Current weight in kilograms" htmlFor="weightKg" hint="Optional">
+        <Input
           id="weightKg"
           name="weightKg"
           type="number"
@@ -120,23 +113,15 @@ export default function CheckInForm() {
           min="20"
           max="500"
           step="0.01"
-          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
         />
+      </Field>
 
-        <p className="mt-1 text-sm text-gray-500">Optional</p>
-      </div>
-
-      <div>
-        <label htmlFor="energyScore" className="block text-sm font-medium">
-          Energy level
-        </label>
-
-        <select
+      <Field label="Energy level" htmlFor="energyScore">
+        <Select
           id="energyScore"
           name="energyScore"
           required
           defaultValue=""
-          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
         >
           <option value="" disabled>
             Select energy level
@@ -146,20 +131,15 @@ export default function CheckInForm() {
           <option value="3">3 — Average</option>
           <option value="4">4 — Good</option>
           <option value="5">5 — Excellent</option>
-        </select>
-      </div>
+        </Select>
+      </Field>
 
-      <div>
-        <label htmlFor="moodScore" className="block text-sm font-medium">
-          Mood
-        </label>
-
-        <select
+      <Field label="Mood" htmlFor="moodScore">
+        <Select
           id="moodScore"
           name="moodScore"
           required
           defaultValue=""
-          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
         >
           <option value="" disabled>
             Select mood
@@ -169,23 +149,18 @@ export default function CheckInForm() {
           <option value="3">3 — Okay</option>
           <option value="4">4 — Good</option>
           <option value="5">5 — Excellent</option>
-        </select>
-      </div>
+        </Select>
+      </Field>
 
-      <div>
-        <label htmlFor="notes" className="block text-sm font-medium">
-          Notes for your coach
-        </label>
-
-        <textarea
+      <Field label="Notes for your coach" htmlFor="notes">
+        <Textarea
           id="notes"
           name="notes"
           rows={6}
           maxLength={3000}
           placeholder="Wins, challenges, sleep, training, nutrition..."
-          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
         />
-      </div>
+      </Field>
 
       <div aria-live="polite">
         {isCompressing && (
@@ -200,20 +175,13 @@ export default function CheckInForm() {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
+        <Button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Submitting..." : "Submit check-in"}
-        </button>
-
-        <Link
-          href="/client/check-ins"
-          className="rounded-md px-4 py-2 text-sm font-medium text-gray-600"
-        >
-          Cancel
-        </Link>
+        </Button>
+        <ButtonLink href="/client/check-ins" variant="ghost">Cancel</ButtonLink>
       </div>
     </form>
   );

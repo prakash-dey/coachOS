@@ -2,6 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { Alert } from "@/app/components/ui/Feedback";
+import { Field, Input } from "@/app/components/ui/FormControls";
 
 import { createNewClient } from "./actions";
 
@@ -63,94 +66,57 @@ export default async function NewClientPage({
         </p>
 
         {errorMessage && (
-          <p className="mt-6 rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </p>
+          <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
 
         <form action={createNewClient} className="mt-8 space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium">
-                First name
-              </label>
-
-              <input
+            <Field label="First name" htmlFor="firstName">
+              <Input
                 id="firstName"
                 name="firstName"
                 type="text"
                 autoComplete="given-name"
                 required
                 maxLength={100}
-                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium">
-                Last name
-              </label>
-
-              <input
+            <Field label="Last name" htmlFor="lastName">
+              <Input
                 id="lastName"
                 name="lastName"
                 type="text"
                 autoComplete="family-name"
                 required
                 maxLength={100}
-                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
               />
-            </div>
+            </Field>
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email address
-            </label>
-
-            <input
+          <Field label="Email address" htmlFor="email" hint="Optional for now, but required before sending an invitation.">
+            <Input
               id="email"
               name="email"
               type="email"
               autoComplete="email"
               maxLength={254}
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             />
+          </Field>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Optional for now, but required before sending an invitation.
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium">
-              Phone number
-            </label>
-
-            <input
+          <Field label="Phone number" htmlFor="phone">
+            <Input
               id="phone"
               name="phone"
               type="tel"
               autoComplete="tel"
               maxLength={32}
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             />
-          </div>
+          </Field>
 
           <div className="flex items-center gap-3">
-            <button
-              type="submit"
-              className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-            >
-              Add client
-            </button>
-
-            <Link
-              href="/clients"
-              className="rounded-md px-4 py-2 text-sm font-medium text-gray-600"
-            >
-              Cancel
-            </Link>
+            <Button type="submit">Add client</Button>
+            <ButtonLink href="/clients" variant="ghost">Cancel</ButtonLink>
           </div>
         </form>
       </section>

@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { Alert } from "@/app/components/ui/Feedback";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { Field, Input, Select } from "@/app/components/ui/FormControls";
 
 import { updateClient } from "./actions";
 
@@ -94,123 +97,78 @@ export default async function EditClientPage({
 
         <h1 className="mt-4 text-3xl font-semibold">Edit client</h1>
 
-        {errorMessage && (
-          <p className="mt-6 rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </p>
-        )}
+        {errorMessage && <Alert className="mt-6">{errorMessage}</Alert>}
 
         <form action={updateClientWithId} className="mt-8 space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium">
-                First name
-              </label>
-
-              <input
+            <Field label="First name" htmlFor="firstName">
+              <Input
                 id="firstName"
                 name="firstName"
                 type="text"
                 defaultValue={client.first_name}
                 required
                 maxLength={100}
-                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium">
-                Last name
-              </label>
-
-              <input
+            <Field label="Last name" htmlFor="lastName">
+              <Input
                 id="lastName"
                 name="lastName"
                 type="text"
                 defaultValue={client.last_name}
                 required
                 maxLength={100}
-                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
               />
-            </div>
+            </Field>
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email address
-            </label>
-
-            <input
+          <Field label="Email address" htmlFor="email">
+            <Input
               id="email"
               name="email"
               type="email"
               defaultValue={client.email ?? ""}
               maxLength={254}
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium">
-              Phone number
-            </label>
-
-            <input
+          <Field label="Phone number" htmlFor="phone">
+            <Input
               id="phone"
               name="phone"
               type="tel"
               defaultValue={client.phone ?? ""}
               maxLength={32}
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="timezone" className="block text-sm font-medium">
-              Timezone
-            </label>
-
-            <input
+          <Field label="Timezone" htmlFor="timezone">
+            <Input
               id="timezone"
               name="timezone"
               type="text"
               defaultValue={client.timezone}
               required
               maxLength={100}
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium">
-              Status
-            </label>
-
-            <select
+          <Field label="Status" htmlFor="status">
+            <Select
               id="status"
               name="status"
               defaultValue={client.status}
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="active">Active</option>
               <option value="archived">Archived</option>
-            </select>
-          </div>
+            </Select>
+          </Field>
 
           <div className="flex items-center gap-3">
-            <button
-              type="submit"
-              className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-            >
-              Save changes
-            </button>
-
-            <Link
-              href={`/clients/${client.id}`}
-              className="rounded-md px-4 py-2 text-sm font-medium text-gray-600"
-            >
-              Cancel
-            </Link>
+            <Button type="submit">Save changes</Button>
+            <ButtonLink href={`/clients/${client.id}`} variant="ghost">Cancel</ButtonLink>
           </div>
         </form>
       </section>

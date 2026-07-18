@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/app/components/ui/Button";
+import { Alert } from "@/app/components/ui/Feedback";
+import { Field, Input } from "@/app/components/ui/FormControls";
 
 import { completeOnboarding } from "./actions";
 
@@ -59,18 +62,12 @@ export default async function OnboardingPage({
         </p>
 
         {errorMessage && (
-          <p className="mt-6 rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </p>
+          <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
 
         <form action={completeOnboarding} className="mt-6 space-y-4">
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium">
-              Your full name
-            </label>
-
-            <input
+          <Field label="Your full name" htmlFor="fullName">
+            <Input
               id="fullName"
               name="fullName"
               type="text"
@@ -78,16 +75,11 @@ export default async function OnboardingPage({
               required
               minLength={1}
               maxLength={120}
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="workspaceName" className="block text-sm font-medium">
-              Workspace name
-            </label>
-
-            <input
+          <Field label="Workspace name" htmlFor="workspaceName">
+            <Input
               id="workspaceName"
               name="workspaceName"
               type="text"
@@ -95,16 +87,10 @@ export default async function OnboardingPage({
               minLength={1}
               maxLength={120}
               placeholder="Prakash Fitness Coaching"
-              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             />
-          </div>
+          </Field>
 
-          <button
-            type="submit"
-            className="w-full rounded-md bg-black px-4 py-2 text-white"
-          >
-            Create workspace
-          </button>
+          <Button type="submit" className="w-full">Create workspace</Button>
         </form>
       </section>
     </main>
