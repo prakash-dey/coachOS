@@ -19,11 +19,14 @@ export async function createWorkoutPlan(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   if (!name || name.length > 120 || description.length > 5000) redirect("/workout-plans/new?error=invalid");
-  const { supabase, user, workspace } = await coachContext();
-  const { data, error } = await supabase.from("workout_plans").insert({ workspace_id: workspace.id, created_by: user.id, name, description: description || null }).select("id").single();
-  if (error || !data) redirect("/workout-plans/new?error=create");
+  const { supabase } = await coachContext();
+  const { data: planId, error } = await supabase.rpc("create_workout_plan", {
+    requested_name: name,
+    requested_description: description || null,
+  });
+  if (error || !planId) redirect("/workout-plans/new?error=create");
   revalidatePath("/workout-plans");
-  redirect(`/workout-plans/${data.id}`);
+  redirect(`/workout-plans/${planId}`);
 }
 
 export async function addWorkoutDay(planId: string, formData: FormData) {
