@@ -3,39 +3,29 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-export async function sendMagicLink(formData: FormData) {
-    const emailValue = formData.get("email");
-    if (typeof emailValue !== "string") {
-        redirect("/login?error=invalid_email");
-    }
+function getAuthCallbackUrl() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) {
+    throw new Error("NEXT_PUBLIC_SITE_URL is not configured.");
+  }
 
-    const email = emailValue.trim().toLowerCase();
-    const emailIsValid = email.length <= 253 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const callbackUrl = new URL("/auth/callback", siteUrl);
+  callbackUrl.searchParams.set("next", "/auth/continue");
+  return callbackUrl.toString();
+}
 
-    if (!emailIsValid) {
-        redirect("/login?error=invalid_email");
-    }
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    if (!siteUrl) {
-        throw new Error("NEXT_PUBLIC_SITE_URL is not configured.");
-    }
-
-    const callbackUrl = new URL("/auth/callback", siteUrl);
-    callbackUrl.searchParams.set("next", "/auth/continue");
-    const supabase = await createClient();
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
+export async function signInWithGoogle() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
     options: {
-      emailRedirectTo: callbackUrl.toString(),
-      shouldCreateUser: true,
+      redirectTo: getAuthCallbackUrl(),
     },
   });
 
-  if (error) {
-    redirect("/login?error=unable_to_send_link");
+  if (error || !data.url) {
+    redirect("/login?error=google_auth_unavailable");
   }
 
-  redirect("/login?message=check_email");
+  redirect(data.url);
 }
