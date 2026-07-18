@@ -22,7 +22,7 @@ export async function sendMagicLink(formData: FormData) {
     }
 
     const callbackUrl = new URL("/auth/callback", siteUrl);
-    callbackUrl.searchParams.set("next", "/dashboard");
+    callbackUrl.searchParams.set("next", "/auth/continue");
     const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithOtp({
