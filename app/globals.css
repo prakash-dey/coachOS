@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f7f2;
-  --foreground: #17352b;
+  --background: #f3f5ef;
+  --foreground: #18352c;
   --surface: #ffffff;
   --muted: #64756e;
   --border: #dce6df;
@@ -30,4 +30,14 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 65%, white);
+  color: var(--brand-strong);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }

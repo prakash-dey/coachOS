@@ -1,0 +1,1 @@
+export default function ClientLoading() { return <main className="animate-pulse px-4 py-8"><div className="mx-auto max-w-6xl"><div className="h-10 w-72 rounded-xl bg-border"/><div className="mt-8 grid gap-4 lg:grid-cols-2"><div className="h-72 rounded-[2rem] bg-border"/><div className="h-72 rounded-[2rem] bg-border"/></div></div></main>; }
