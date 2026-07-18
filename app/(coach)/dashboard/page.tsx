@@ -14,12 +14,17 @@ function Ring({ value, label }: { value: number; label: string }) {
   );
 }
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: workspace } = await supabase.from("workspaces").select("id, name").eq("owner_id", user.id).maybeSingle();
+  const { data: workspace } = await supabase.from("workspaces").select("id, name, is_demo").eq("owner_id", user.id).maybeSingle();
   if (!workspace) redirect("/onboarding");
 
   const monday = new Date();
@@ -43,9 +48,13 @@ export default async function DashboardPage() {
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
       <div className="mx-auto max-w-7xl">
+        {params.error === "demo_switch_failed" && <p role="alert" className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">We couldn’t end your current session, so demo mode was not started. Your workspace is unchanged.</p>}
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div><p className="text-xs font-bold uppercase tracking-[.2em] text-brand">Command center</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Good to see you.</h1><p className="mt-2 text-muted">Here’s the pulse of {workspace.name} this week.</p></div>
-          <Link href="/clients/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/15 transition hover:-translate-y-0.5 hover:bg-brand-strong">+ Add a client</Link>
+          <div className="flex flex-wrap gap-3">
+            {!workspace.is_demo && <Link href="/demo/switch" className="inline-flex min-h-11 items-center justify-center rounded-full border border-brand/25 bg-surface px-5 text-sm font-semibold text-brand transition hover:border-brand/50 hover:bg-brand/5">Explore demo</Link>}
+            <Link href="/clients/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/15 transition hover:-translate-y-0.5 hover:bg-brand-strong">+ Add a client</Link>
+          </div>
         </header>
 
         <section className="mt-8 grid gap-4 xl:grid-cols-[1.45fr_.8fr]">
@@ -70,7 +79,7 @@ export default async function DashboardPage() {
             {pendingReviews.length ? <div className="mt-5 divide-y divide-border">{pendingReviews.slice(0, 5).map((checkIn) => { const relation = checkIn.clients as unknown as { first_name: string; last_name: string } | null; return <Link key={checkIn.id} href={`/clients/${checkIn.client_id}/check-ins`} className="flex min-h-16 items-center justify-between gap-4 py-3"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-background text-sm font-bold text-brand">{relation?.first_name?.[0] ?? "C"}</span><div><p className="text-sm font-semibold">{relation ? `${relation.first_name} ${relation.last_name}` : "Client"}</p><p className="text-xs text-muted">Energy {checkIn.energy_score}/5 · Mood {checkIn.mood_score}/5</p></div></div><span className="text-sm text-brand">Review →</span></Link>; })}</div> : <div className="mt-8 rounded-2xl bg-background p-7 text-center"><p className="font-semibold">Inbox zero ✦</p><p className="mt-1 text-sm text-muted">Every check-in has been reviewed.</p></div>}
           </div>
 
-          <div className="rounded-[2rem] border border-border bg-[#e7ebff] p-6"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5145a5]">Plan studio</p><h2 className="mt-2 text-xl font-semibold">Build once. Coach personally.</h2><p className="mt-2 text-sm leading-6 text-muted">You have {plans?.length ?? 0} training plans in your library. Turn your best programming into reusable systems.</p><div className="mt-7 flex gap-3"><Link href="/workout-plans" className="inline-flex min-h-11 items-center rounded-full bg-[#5145a5] px-5 text-sm font-semibold text-white">Workout plans</Link><span className="inline-flex min-h-11 items-center rounded-full bg-white/60 px-4 text-xs font-semibold text-[#5145a5]">Nutrition soon</span></div></div>
+          <div className="rounded-[2rem] border border-border bg-[#e7ebff] p-6"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5145a5]">Plan studio</p><h2 className="mt-2 text-xl font-semibold">Build once. Coach personally.</h2><p className="mt-2 text-sm leading-6 text-muted">You have {plans?.length ?? 0} training plans in your library. Turn your best programming into reusable systems.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/workout-plans" className="inline-flex min-h-11 items-center rounded-full bg-[#5145a5] px-5 text-sm font-semibold text-white">Workout plans</Link><Link href="/nutrition-plans" className="inline-flex min-h-11 items-center rounded-full bg-white/70 px-5 text-sm font-semibold text-[#5145a5] transition hover:bg-white">Nutrition plans</Link></div></div>
         </section>
       </div>
     </main>

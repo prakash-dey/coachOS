@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { startDemo } from "@/app/demo/actions";
 
 export default function MarketingHeader() {
   return (
@@ -19,6 +20,11 @@ export default function MarketingHeader() {
         </Link>
 
         <nav aria-label="Main navigation" className="flex items-center gap-3">
+          <form action={startDemo}>
+            <button type="submit" className="hidden rounded-lg px-4 py-2 text-sm font-semibold text-brand transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand sm:inline-flex">
+              Explore demo
+            </button>
+          </form>
           <Link
             href="/login"
             className="hidden rounded-lg px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand sm:inline-flex"

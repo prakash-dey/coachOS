@@ -13,6 +13,7 @@ CoachOS is not a marketplace. Clients join only through a coach invitation and c
 - Workout plan library, day/exercise builder, and assignments
 - Nutrition plan library, meals, food alternatives, macros, and assignments
 - Dedicated responsive client portal for plans and check-ins
+- Isolated six-hour demo workspaces with 20 fictional clients
 - PostgreSQL Row Level Security for workspace isolation
 
 ## Local development
@@ -33,6 +34,18 @@ NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 ```
 
 Never expose or commit the Supabase secret/service-role key.
+
+## Demo mode
+
+Demo mode uses Supabase anonymous authentication and provisions a real,
+isolated CoachOS workspace. It renders through the same dashboard, client,
+check-in, workout, nutrition, and progress routes as a permanent workspace.
+Demo workspaces expire after six hours and are removed by Supabase Cron.
+
+For local development, anonymous authentication is enabled in
+`supabase/config.toml`. For the hosted project, enable Anonymous Sign-Ins in
+Supabase Authentication settings and configure CAPTCHA or Cloudflare
+Turnstile before publishing the demo entry point.
 
 ## Verification
 

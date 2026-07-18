@@ -5,11 +5,14 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { signOut } from "@/app/auth/actions";
+import { leaveDemo } from "@/app/demo/actions";
 
 type CoachShellProps = Readonly<{
   children: React.ReactNode;
   userEmail: string;
   workspaceName: string;
+  isDemo: boolean;
+  demoExpiresAt: string | null;
 }>;
 
 type NavItem = { href?: string; label: string; icon: React.ReactNode };
@@ -27,7 +30,7 @@ function NavIcon({ children }: Readonly<{ children: React.ReactNode }>) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0">{children}</svg>;
 }
 
-export default function CoachShell({ children, userEmail, workspaceName }: CoachShellProps) {
+export default function CoachShell({ children, userEmail, workspaceName, isDemo, demoExpiresAt }: CoachShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -67,9 +70,9 @@ export default function CoachShell({ children, userEmail, workspaceName }: Coach
       </nav>
 
       <div className="border-t border-white/10 p-3">
-        <form action={signOut}>
+        <form action={isDemo ? leaveDemo : signOut}>
           <button type="submit" className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-            <NavIcon><path d="M10 17l5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /></NavIcon>Sign out
+            <NavIcon><path d="M10 17l5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /></NavIcon>{isDemo ? "Exit demo" : "Sign out"}
           </button>
         </form>
       </div>
@@ -99,6 +102,7 @@ export default function CoachShell({ children, userEmail, workspaceName }: Coach
           </div>
         )}
 
+        {isDemo && <div className="border-b border-[#d4b735] bg-[#fff4b8] px-4 py-2.5 text-center text-xs font-semibold text-[#624f0b]">Demo workspace · All people and data are fictional · Expires {demoExpiresAt ? new Date(demoExpiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "soon"}</div>}
         <div className="min-h-[calc(100vh-4rem)]">{children}</div>
       </div>
     </div>

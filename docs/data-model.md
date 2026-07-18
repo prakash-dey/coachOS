@@ -75,6 +75,19 @@ be accessible from another workspace.
 The Supabase secret key bypasses RLS. It must only be used in trusted
 server-side code and must never be exposed to the browser or committed to Git.
 
+## Demo Workspace Lifecycle
+
+A demo visitor receives a unique anonymous Supabase identity and a private
+workspace containing fictional records. `workspaces.is_demo` distinguishes
+these tenants and `demo_expires_at` limits them to six hours. Demo users remain
+subject to the same workspace RLS boundary as permanent coaches.
+
+Demo workspaces cannot create invitations or upload check-in photos. A coach
+may temporarily link the anonymous identity to one fictional client to render
+the existing client portal, then restore the coach membership. A scheduled
+database cleanup deletes expired demo workspaces before deleting their
+anonymous authentication identities.
+
 ## Authentication Identity
 
 Supabase Auth manages every authenticated coach and client in:
