@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-
+import Link from "next/link";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,10 +33,7 @@ export default async function ClientPortalPage() {
     redirect("/dashboard");
   }
 
-  if (
-    membership.role !== "client" ||
-    membership.status !== "active"
-  ) {
+  if (membership.role !== "client" || membership.status !== "active") {
     redirect("/login");
   }
 
@@ -93,6 +90,12 @@ export default async function ClientPortalPage() {
           <p className="mt-2 text-gray-600">
             Your plans, check-ins, and progress will appear here.
           </p>
+          <Link
+            href="/client/check-ins"
+            className="mt-5 inline-block rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
+          >
+            View check-ins
+          </Link>
         </div>
       </section>
     </main>
