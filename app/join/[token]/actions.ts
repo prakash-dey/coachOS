@@ -8,22 +8,11 @@ function tokenIsValid(token: string) {
   return /^[0-9a-f]{64}$/.test(token);
 }
 
-export async function sendClientMagicLink(
+export async function signInWithGoogleForInvitation(
   invitationToken: string,
-  formData: FormData,
 ) {
-  const emailValue = formData.get("email");
-  const email =
-    typeof emailValue === "string"
-      ? emailValue.trim().toLowerCase()
-      : "";
-
-  const emailIsValid =
-    email.length <= 254 &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  if (!tokenIsValid(invitationToken) || !emailIsValid) {
-    redirect(`/join/${invitationToken}?error=invalid_input`);
+  if (!tokenIsValid(invitationToken)) {
+    redirect(`/join/${invitationToken}?error=invalid_invitation`);
   }
 
   const supabase = await createClient();
@@ -51,19 +40,21 @@ export async function sendClientMagicLink(
     `/join/${invitationToken}`,
   );
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
     options: {
-      emailRedirectTo: callbackUrl.toString(),
-      shouldCreateUser: true,
+      redirectTo: callbackUrl.toString(),
+      queryParams: {
+        prompt: "select_account",
+      },
     },
   });
 
-  if (error) {
+  if (error || !data.url) {
     redirect(`/join/${invitationToken}?error=login_failed`);
   }
 
-  redirect(`/join/${invitationToken}?message=check_email`);
+  redirect(data.url);
 }
 
 export async function acceptInvitation(
