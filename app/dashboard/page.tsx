@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -37,6 +38,12 @@ export default async function DashboardPage() {
             <h1 className="mt-2 text-3xl font-semibold">{workspace.name}</h1>
 
             <p className="mt-4 text-gray-600">Signed in as {user.email}</p>
+            <Link
+              href="/clients"
+              className="mt-6 inline-block rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
+            >
+              Manage clients
+            </Link>
           </div>
 
           <form action={signOut}>
