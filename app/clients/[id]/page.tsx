@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-
+import InviteClient from "./InviteClient";
 import { createClient } from "@/lib/supabase/server";
 
 type ClientDetailPageProps = {
@@ -15,9 +15,7 @@ export default async function ClientDetailPage({
   const { id } = await params;
 
   const idIsValid =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      id,
-    );
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   if (!idIsValid) {
     notFound();
@@ -122,6 +120,10 @@ export default async function ClientDetailPage({
             </div>
           </dl>
         </div>
+        <InviteClient
+          clientId={client.id}
+          canInvite={client.status === "active" && Boolean(client.email)}
+        />
       </section>
     </main>
   );
