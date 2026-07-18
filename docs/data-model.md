@@ -20,8 +20,20 @@ The first database milestone supports:
 - Invitation-only client access
 - Strict separation between coach workspaces
 
-Workout plans, meal plans, goals, measurements, and check-ins will be added
-in later feature migrations.
+Workout plans, nutrition plans, assignments, and weekly check-ins are added
+through later feature migrations while preserving the same workspace boundary.
+
+## Plan Modules
+
+Workout plans contain ordered training days and ordered exercises. Active plans
+can be assigned to active clients. Nutrition plans contain macro targets,
+ordered meals, food amounts, and flexible alternatives. Both plan modules use
+separate assignment records so lifecycle history is retained when a plan is
+completed or cancelled.
+
+Coaches can create and modify plans only in the workspace they own. Clients can
+read only active plans assigned to their own client record. Every plan, child,
+and assignment table has Row Level Security enabled.
 
 ## MVP Roles
 

@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CoachOS
 
-## Getting Started
+CoachOS is a private coaching workspace for fitness coaches and nutritionists. Coaches manage their own clients, collect weekly check-ins, review progress, build reusable workout and nutrition plans, and assign those plans directly to clients.
 
-First, run the development server:
+CoachOS is not a marketplace. Clients join only through a coach invitation and can access only their own workspace data.
+
+## Product areas
+
+- Coach onboarding and secure Supabase authentication
+- Client records and single-use invitation links
+- Weekly check-ins with compressed progress photos and coach feedback
+- Coach-wide check-in inbox and progress map
+- Workout plan library, day/exercise builder, and assignments
+- Nutrition plan library, meals, food alternatives, macros, and assignments
+- Dedicated responsive client portal for plans and check-ins
+- PostgreSQL Row Level Security for workspace isolation
+
+## Local development
+
+Requirements: Node.js 24+, npm 11+, Docker, and the Supabase CLI.
 
 ```bash
+npm install
+npx supabase start
+npx supabase db reset
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy the local Supabase URL and publishable key into `.env.local`, together with:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Never expose or commit the Supabase secret/service-role key.
 
-## Learn More
+## Verification
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx supabase db lint --local
+npm run lint
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Git workflow
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Create a focused feature branch, commit and push it, open a pull request targeting `main`, merge through GitHub, then delete the merged remote and local branch.
