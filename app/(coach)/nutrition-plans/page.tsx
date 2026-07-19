@@ -1,7 +1,15 @@
 import Link from "next/link";
 
+import { FlameIcon, MealIcon, ProteinIcon, UserPlusIcon } from "@/app/components/ui/Icons";
+import { PlanCard } from "@/app/components/ui/PlanCard";
 import { getCoachContext } from "@/lib/auth-context";
 import { getNutritionPlanLibrary } from "@/lib/coach-data";
+
+const statusStyles = {
+  active: "bg-emerald-700 text-white shadow-emerald-900/15",
+  draft: "bg-amber-100 text-amber-900 ring-1 ring-amber-200",
+  archived: "bg-slate-200 text-slate-700 ring-1 ring-slate-300",
+} as const;
 
 export default async function NutritionPlansPage() {
   const { workspace } = await getCoachContext();
@@ -25,22 +33,25 @@ export default async function NutritionPlansPage() {
               const meals = (plan.nutrition_meals as unknown as { count: number }[])?.[0]?.count ?? 0;
               const assigned = (plan.nutrition_plan_assignments as unknown as { count: number }[])?.[0]?.count ?? 0;
               const palette = ["bg-[#fff0e7]", "bg-[#f8e8ed]", "bg-[#e4f4de]"];
+              const statusClass = statusStyles[plan.status as keyof typeof statusStyles] ?? statusStyles.draft;
 
               return (
-                <Link href={`/nutrition-plans/${plan.id}`} key={plan.id} className={`group rounded-[2rem] border border-black/5 p-6 ${palette[index % palette.length]} transition hover:-translate-y-1 hover:shadow-xl`}>
-                  <div className="flex justify-between">
-                    <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold capitalize">{plan.status}</span>
-                    <span className="grid h-10 w-10 place-items-center rounded-full bg-white/70">→</span>
-                  </div>
-                  <h2 className="mt-7 text-2xl font-semibold">{plan.name}</h2>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{plan.description || "A flexible daily food framework."}</p>
-                  <div className="mt-6 grid grid-cols-4 gap-2 text-center">
-                    <div><b>{plan.daily_calories ?? "—"}</b><small className="block text-[9px] uppercase text-muted">kcal</small></div>
-                    <div><b>{plan.protein_grams ?? "—"}</b><small className="block text-[9px] uppercase text-muted">protein</small></div>
-                    <div><b>{meals}</b><small className="block text-[9px] uppercase text-muted">meals</small></div>
-                    <div><b>{assigned}</b><small className="block text-[9px] uppercase text-muted">assigned</small></div>
-                  </div>
-                </Link>
+                <PlanCard
+                  key={plan.id}
+                  href={`/nutrition-plans/${plan.id}`}
+                  title={plan.name}
+                  description={plan.description}
+                  status={plan.status}
+                  backgroundClassName={palette[index % palette.length]}
+                  statusClassName={statusClass}
+                  fallbackDescription="A flexible daily food framework."
+                  metrics={[
+                    { icon: <FlameIcon />, value: plan.daily_calories ?? "—", label: "kcal" },
+                    { icon: <ProteinIcon />, value: plan.protein_grams ?? "—", label: "protein" },
+                    { icon: <MealIcon />, value: meals, label: "meals" },
+                    { icon: <UserPlusIcon />, value: assigned, label: "assigned" },
+                  ]}
+                />
               );
             })}
           </div>
