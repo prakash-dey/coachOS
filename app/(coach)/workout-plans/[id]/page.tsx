@@ -3,7 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
 import { ConfirmSubmitButton } from "@/app/components/ui/ConfirmSubmitButton";
 import { Input, Select } from "@/app/components/ui/FormControls";
-import { CheckIcon, UnlinkIcon, UserPlusIcon } from "@/app/components/ui/Icons";
+import {
+  SaveIcon,
+  UserMinusIcon,
+  UserPlusIcon,
+} from "@/app/components/ui/Icons";
 import { createClient } from "@/lib/supabase/server";
 import WorkoutDaysManager from "./WorkoutDaysManager";
 import {
@@ -54,7 +58,9 @@ type WorkoutAssignmentRow = Omit<WorkoutAssignment, "clients"> & {
 function normalizeAssignment(row: WorkoutAssignmentRow): WorkoutAssignment {
   return {
     ...row,
-    clients: Array.isArray(row.clients) ? (row.clients[0] ?? null) : row.clients,
+    clients: Array.isArray(row.clients)
+      ? (row.clients[0] ?? null)
+      : row.clients,
   };
 }
 
@@ -84,27 +90,37 @@ export default async function WorkoutPlanPage({
   if (planError) throw new Error("Unable to load workout plan.");
   if (!plan) notFound();
 
-  const [{ data: days, error: daysError }, { data: assignments, error: assignmentsError }, { data: clients }] =
-    await Promise.all([
-      supabase
-        .from("workout_days")
-        .select("id, name, notes, position, workout_exercises(id, name, sets, reps, rest_seconds, tempo, target_load, notes, demo_url, position)")
-        .eq("workout_plan_id", plan.id)
-        .order("position", { ascending: true })
-        .order("position", { referencedTable: "workout_exercises", ascending: true }),
-      supabase
-        .from("workout_plan_assignments")
-        .select("id, starts_on, ends_on, status, clients(id, first_name, last_name)")
-        .eq("workspace_id", workspace.id)
-        .eq("workout_plan_id", plan.id)
-        .order("starts_on", { ascending: false }),
-      supabase
-        .from("clients")
-        .select("id, first_name, last_name")
-        .eq("workspace_id", workspace.id)
-        .eq("status", "active")
-        .order("first_name"),
-    ]);
+  const [
+    { data: days, error: daysError },
+    { data: assignments, error: assignmentsError },
+    { data: clients },
+  ] = await Promise.all([
+    supabase
+      .from("workout_days")
+      .select(
+        "id, name, notes, position, workout_exercises(id, name, sets, reps, rest_seconds, tempo, target_load, notes, demo_url, position)",
+      )
+      .eq("workout_plan_id", plan.id)
+      .order("position", { ascending: true })
+      .order("position", {
+        referencedTable: "workout_exercises",
+        ascending: true,
+      }),
+    supabase
+      .from("workout_plan_assignments")
+      .select(
+        "id, starts_on, ends_on, status, clients(id, first_name, last_name)",
+      )
+      .eq("workspace_id", workspace.id)
+      .eq("workout_plan_id", plan.id)
+      .order("starts_on", { ascending: false }),
+    supabase
+      .from("clients")
+      .select("id, first_name, last_name")
+      .eq("workspace_id", workspace.id)
+      .eq("status", "active")
+      .order("first_name"),
+  ]);
 
   if (daysError) throw new Error("Unable to load workout days.");
   if (assignmentsError) throw new Error("Unable to load workout assignments.");
@@ -113,8 +129,12 @@ export default async function WorkoutPlanPage({
   const assign = assignWorkoutPlan.bind(null, plan.id);
   const today = new Date().toISOString().slice(0, 10);
   const workoutDays = (days as WorkoutDay[] | null) ?? [];
-  const planAssignments = ((assignments as unknown as WorkoutAssignmentRow[] | null) ?? []).map(normalizeAssignment);
-  const activeAssignments = planAssignments.filter((assignment) => assignment.status === "active");
+  const planAssignments = (
+    (assignments as unknown as WorkoutAssignmentRow[] | null) ?? []
+  ).map(normalizeAssignment);
+  const activeAssignments = planAssignments.filter(
+    (assignment) => assignment.status === "active",
+  );
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
       <div className="mx-auto max-w-7xl">
@@ -148,11 +168,19 @@ export default async function WorkoutPlanPage({
               <option value="active">Active</option>
               <option value="archived">Archived</option>
             </Select>
-            <Button type="submit" aria-label="Save plan status" title="Save plan status"><CheckIcon /></Button>
+            <Button
+              type="submit"
+              aria-label="Save plan status"
+              title="Save plan status"
+            >
+              <SaveIcon />
+            </Button>
           </form>
         </header>
         <div className="mt-8 grid gap-5 xl:grid-cols-[1fr_22rem]">
-          <section className="space-y-5"><WorkoutDaysManager planId={plan.id} days={workoutDays} /></section>
+          <section className="space-y-5">
+            <WorkoutDaysManager planId={plan.id} days={workoutDays} />
+          </section>
           <aside className="space-y-5">
             <div className="rounded-[2rem] border border-border bg-surface p-6">
               <p className="text-xs font-bold uppercase tracking-[.16em] text-muted">
@@ -177,7 +205,14 @@ export default async function WorkoutPlanPage({
                     required
                     defaultValue={today}
                   />
-                  <Button type="submit" className="w-full" aria-label="Assign workout" title="Assign workout"><UserPlusIcon /></Button>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    aria-label="Assign workout"
+                    title="Assign workout"
+                  >
+                    <UserPlusIcon />
+                  </Button>
                 </form>
               ) : (
                 <p className="mt-4 rounded-xl bg-[#fff0e7] p-4 text-sm text-[#8a421e]">
@@ -197,7 +232,11 @@ export default async function WorkoutPlanPage({
                       first_name: string;
                       last_name: string;
                     } | null;
-                    const removeClient = removeClientFromWorkout.bind(null, plan.id, assignment.id);
+                    const removeClient = removeClientFromWorkout.bind(
+                      null,
+                      plan.id,
+                      assignment.id,
+                    );
                     return (
                       <div
                         key={assignment.id}
@@ -215,7 +254,17 @@ export default async function WorkoutPlanPage({
                             </p>
                           </div>
                           <form action={removeClient} className="shrink-0">
-                            <ConfirmSubmitButton variant="danger" size="sm" className="h-10 w-10 min-h-0 p-0" pendingLabel="" message={`Remove ${client ? `${client.first_name} ${client.last_name}` : "this client"} from this workout plan?`} aria-label="Remove client from course" title="Remove client from course"><UnlinkIcon /></ConfirmSubmitButton>
+                            <ConfirmSubmitButton
+                              variant="danger"
+                              size="sm"
+                              className="h-10 w-[50px] min-h-0 border-red-300 bg-white p-0 text-red-700 shadow-sm hover:bg-red-50 hover:text-red-800"
+                              pendingLabel=""
+                              message={`Remove ${client ? `${client.first_name} ${client.last_name}` : "this client"} from this workout plan?`}
+                              aria-label="Remove client from course"
+                              title="Remove client from course"
+                            >
+                              <UserMinusIcon className="h-full w-auto" />
+                            </ConfirmSubmitButton>
                           </form>
                         </div>
                       </div>
