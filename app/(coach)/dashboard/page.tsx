@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
+import { getDashboardSummary } from "@/lib/coach-data";
 
 function Ring({ value, label }: { value: number; label: string }) {
   const safeValue = Math.max(0, Math.min(value, 100));
@@ -20,26 +20,17 @@ type DashboardPageProps = {
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: workspace } = await supabase.from("workspaces").select("id, name, is_demo").eq("owner_id", user.id).maybeSingle();
-  if (!workspace) redirect("/onboarding");
+  const { workspace } = await getCoachContext();
 
   const monday = new Date();
   const day = monday.getUTCDay();
   monday.setUTCDate(monday.getUTCDate() - (day === 0 ? 6 : day - 1));
   const weekStart = monday.toISOString().slice(0, 10);
 
-  const [{ data: clients }, { data: checkIns }, { data: plans }] = await Promise.all([
-    supabase.from("clients").select("id, first_name, last_name, status, created_at").eq("workspace_id", workspace.id).neq("status", "archived").order("created_at", { ascending: false }),
-    supabase.from("check_ins").select("id, client_id, energy_score, mood_score, coach_feedback, submitted_at, clients(first_name, last_name)").eq("workspace_id", workspace.id).gte("week_start", weekStart).order("submitted_at", { ascending: false }),
-    supabase.from("workout_plans").select("id, status").eq("workspace_id", workspace.id),
-  ]);
+  const { clients, checkIns, plans } = await getDashboardSummary(workspace.id, weekStart);
 
-  const activeClients = clients?.filter((client) => client.status === "active") ?? [];
-  const weeklyCheckIns = checkIns ?? [];
+  const activeClients = clients.filter((client) => client.status === "active");
+  const weeklyCheckIns = checkIns;
   const pendingReviews = weeklyCheckIns.filter((checkIn) => !checkIn.coach_feedback);
   const responseRate = activeClients.length ? Math.round((weeklyCheckIns.length / activeClients.length) * 100) : 0;
   const averageEnergy = weeklyCheckIns.length ? (weeklyCheckIns.reduce((sum, item) => sum + item.energy_score, 0) / weeklyCheckIns.length).toFixed(1) : "—";
@@ -79,7 +70,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             {pendingReviews.length ? <div className="mt-5 divide-y divide-border">{pendingReviews.slice(0, 5).map((checkIn) => { const relation = checkIn.clients as unknown as { first_name: string; last_name: string } | null; return <Link key={checkIn.id} href={`/clients/${checkIn.client_id}/check-ins`} className="flex min-h-16 items-center justify-between gap-4 py-3"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-background text-sm font-bold text-brand">{relation?.first_name?.[0] ?? "C"}</span><div><p className="text-sm font-semibold">{relation ? `${relation.first_name} ${relation.last_name}` : "Client"}</p><p className="text-xs text-muted">Energy {checkIn.energy_score}/5 · Mood {checkIn.mood_score}/5</p></div></div><span className="text-sm text-brand">Review →</span></Link>; })}</div> : <div className="mt-8 rounded-2xl bg-background p-7 text-center"><p className="font-semibold">Inbox zero ✦</p><p className="mt-1 text-sm text-muted">Every check-in has been reviewed.</p></div>}
           </div>
 
-          <div className="rounded-[2rem] border border-border bg-[#e7ebff] p-6"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5145a5]">Plan studio</p><h2 className="mt-2 text-xl font-semibold">Build once. Coach personally.</h2><p className="mt-2 text-sm leading-6 text-muted">You have {plans?.length ?? 0} training plans in your library. Turn your best programming into reusable systems.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/workout-plans" className="inline-flex min-h-11 items-center rounded-full bg-[#5145a5] px-5 text-sm font-semibold text-white">Workout plans</Link><Link href="/nutrition-plans" className="inline-flex min-h-11 items-center rounded-full bg-white/70 px-5 text-sm font-semibold text-[#5145a5] transition hover:bg-white">Nutrition plans</Link></div></div>
+          <div className="rounded-[2rem] border border-border bg-[#e7ebff] p-6"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5145a5]">Plan studio</p><h2 className="mt-2 text-xl font-semibold">Build once. Coach personally.</h2><p className="mt-2 text-sm leading-6 text-muted">You have {plans.length} training plans in your library. Turn your best programming into reusable systems.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/workout-plans" className="inline-flex min-h-11 items-center rounded-full bg-[#5145a5] px-5 text-sm font-semibold text-white">Workout plans</Link><Link href="/nutrition-plans" className="inline-flex min-h-11 items-center rounded-full bg-white/70 px-5 text-sm font-semibold text-[#5145a5] transition hover:bg-white">Nutrition plans</Link></div></div>
         </section>
       </div>
     </main>
