@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { switchToDemo } from "@/app/demo/actions";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { BrandLink } from "@/app/components/ui/Brand";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SwitchToDemoPage() {
@@ -14,10 +15,11 @@ export default async function SwitchToDemoPage() {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-4 py-12">
       <section className="w-full max-w-xl rounded-[2rem] border border-border bg-surface p-7 shadow-xl shadow-brand/5 sm:p-10">
-        <span className="inline-flex rounded-full bg-[#fff4b8] px-3 py-1 text-xs font-bold uppercase tracking-[.14em] text-[#624f0b]">
+        <BrandLink />
+        <span className="mt-6 inline-flex rounded-full bg-[#fff4b8] px-3 py-1 text-xs font-bold uppercase tracking-[.14em] text-[#624f0b]">
           Demo mode
         </span>
-        <h1 className="mt-5 text-3xl font-semibold tracking-tight">Explore CoachOS with fictional data</h1>
+        <h1 className="mt-8 text-3xl font-semibold tracking-tight">Explore CoachOS with fictional data</h1>
         <p className="mt-3 leading-7 text-muted">
           We’ll sign you out of your current account and open an isolated demo workspace with 20 fictional clients. Your real workspace and data will not be changed.
         </p>

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
 import { GoogleIcon } from "@/app/components/ui/GoogleIcon";
+import { BrandLink } from "@/app/components/ui/Brand";
 
 import { acceptInvitation, signInWithGoogleForInvitation } from "./actions";
 
@@ -72,9 +73,9 @@ export default async function JoinPage({
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <section className="w-full max-w-md">
-        <p className="text-sm font-medium">CoachOS</p>
+        <BrandLink />
 
-        <h1 className="mt-2 text-3xl font-semibold">
+        <h1 className="mt-8 text-3xl font-semibold">
           You’re invited, {invitation.client_first_name}
         </h1>
 
