@@ -51,14 +51,90 @@ export async function addExercise(planId: string, dayId: string, formData: FormD
   const reps = String(formData.get("reps") ?? "").trim();
   const sets = Number(formData.get("sets"));
   const rest = Number(formData.get("restSeconds") || 0);
-  if (!name || !reps || !Number.isInteger(sets) || sets < 1 || sets > 20 || rest < 0 || rest > 3600) throw new Error("Enter valid exercise details.");
+  const tempo = String(formData.get("tempo") ?? "").trim();
+  const targetLoad = String(formData.get("targetLoad") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+  const demoUrl = String(formData.get("demoUrl") ?? "").trim();
+  if (!name || !reps || !Number.isInteger(sets) || sets < 1 || sets > 20 || rest < 0 || rest > 3600 || tempo.length > 50 || targetLoad.length > 80 || notes.length > 3000 || !isValidOptionalUrl(demoUrl)) throw new Error("Enter valid exercise details.");
   const { supabase, workspace } = await coachContext();
   const { data: day } = await supabase.from("workout_days").select("id, workout_plans!inner(workspace_id)").eq("id", dayId).eq("workout_plans.workspace_id", workspace.id).maybeSingle();
   if (!day) throw new Error("Training day not found.");
   const { data: lastExercise } = await supabase.from("workout_exercises").select("position").eq("workout_day_id", dayId).order("position", { ascending: false }).limit(1).maybeSingle();
-  const { error } = await supabase.from("workout_exercises").insert({ workout_day_id: dayId, position: (lastExercise?.position ?? 0) + 1, name, sets, reps, rest_seconds: rest || null });
+  const { error } = await supabase.from("workout_exercises").insert({ workout_day_id: dayId, position: (lastExercise?.position ?? 0) + 1, name, sets, reps, rest_seconds: rest || null, tempo: tempo || null, target_load: targetLoad || null, notes: notes || null, demo_url: demoUrl || null });
   if (error) throw new Error("Unable to add exercise.");
   revalidatePath(`/workout-plans/${planId}`);
+}
+
+function isValidOptionalUrl(value: string) {
+  if (!value) return true;
+  if (value.length > 2048) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export async function updateWorkoutDay(planId: string, dayId: string, formData: FormData) {
+  if (!uuidPattern.test(planId) || !uuidPattern.test(dayId)) throw new Error("Invalid training day.");
+  const name = String(formData.get("name") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+  if (!name || name.length > 120 || notes.length > 3000) throw new Error("Enter valid day details.");
+  const { supabase, workspace } = await coachContext();
+  const { data: plan } = await supabase.from("workout_plans").select("id").eq("id", planId).eq("workspace_id", workspace.id).maybeSingle();
+  if (!plan) throw new Error("Plan not found.");
+  const { error } = await supabase.from("workout_days").update({ name, notes: notes || null }).eq("id", dayId).eq("workout_plan_id", planId);
+  if (error) throw new Error("Unable to update training day.");
+  revalidatePath(`/workout-plans/${planId}`);
+}
+
+export async function deleteWorkoutDay(planId: string, dayId: string) {
+  if (!uuidPattern.test(planId) || !uuidPattern.test(dayId)) throw new Error("Invalid training day.");
+  const { supabase, workspace } = await coachContext();
+  const { data: plan } = await supabase.from("workout_plans").select("id").eq("id", planId).eq("workspace_id", workspace.id).maybeSingle();
+  if (!plan) throw new Error("Plan not found.");
+  const { error } = await supabase.from("workout_days").delete().eq("id", dayId).eq("workout_plan_id", planId);
+  if (error) throw new Error("Unable to delete training day.");
+  revalidatePath(`/workout-plans/${planId}`);
+}
+
+export async function updateExercise(planId: string, dayId: string, exerciseId: string, formData: FormData) {
+  if (!uuidPattern.test(planId) || !uuidPattern.test(dayId) || !uuidPattern.test(exerciseId)) throw new Error("Invalid exercise.");
+  const name = String(formData.get("name") ?? "").trim();
+  const reps = String(formData.get("reps") ?? "").trim();
+  const sets = Number(formData.get("sets"));
+  const rest = Number(formData.get("restSeconds") || 0);
+  const tempo = String(formData.get("tempo") ?? "").trim();
+  const targetLoad = String(formData.get("targetLoad") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+  const demoUrl = String(formData.get("demoUrl") ?? "").trim();
+  if (!name || !reps || !Number.isInteger(sets) || sets < 1 || sets > 20 || rest < 0 || rest > 3600 || tempo.length > 50 || targetLoad.length > 80 || notes.length > 3000 || !isValidOptionalUrl(demoUrl)) throw new Error("Enter valid exercise details.");
+  const { supabase, workspace } = await coachContext();
+  const { data: day } = await supabase.from("workout_days").select("id, workout_plans!inner(workspace_id)").eq("id", dayId).eq("workout_plan_id", planId).eq("workout_plans.workspace_id", workspace.id).maybeSingle();
+  if (!day) throw new Error("Training day not found.");
+  const { error } = await supabase.from("workout_exercises").update({ name, sets, reps, rest_seconds: rest || null, tempo: tempo || null, target_load: targetLoad || null, notes: notes || null, demo_url: demoUrl || null }).eq("id", exerciseId).eq("workout_day_id", dayId);
+  if (error) throw new Error("Unable to update exercise.");
+  revalidatePath(`/workout-plans/${planId}`);
+}
+
+export async function deleteExercise(planId: string, dayId: string, exerciseId: string) {
+  if (!uuidPattern.test(planId) || !uuidPattern.test(dayId) || !uuidPattern.test(exerciseId)) throw new Error("Invalid exercise.");
+  const { supabase, workspace } = await coachContext();
+  const { data: day } = await supabase.from("workout_days").select("id, workout_plans!inner(workspace_id)").eq("id", dayId).eq("workout_plan_id", planId).eq("workout_plans.workspace_id", workspace.id).maybeSingle();
+  if (!day) throw new Error("Training day not found.");
+  const { error } = await supabase.from("workout_exercises").delete().eq("id", exerciseId).eq("workout_day_id", dayId);
+  if (error) throw new Error("Unable to delete exercise.");
+  revalidatePath(`/workout-plans/${planId}`);
+}
+
+export async function removeClientFromWorkout(planId: string, assignmentId: string) {
+  if (!uuidPattern.test(planId) || !uuidPattern.test(assignmentId)) throw new Error("Invalid assignment.");
+  const { supabase, workspace } = await coachContext();
+  const { data: assignment, error } = await supabase.from("workout_plan_assignments").update({ status: "cancelled" }).eq("id", assignmentId).eq("workout_plan_id", planId).eq("workspace_id", workspace.id).eq("status", "active").select("client_id").maybeSingle();
+  if (error || !assignment) throw new Error("Unable to remove client from this workout.");
+  revalidatePath(`/workout-plans/${planId}`);
+  revalidatePath(`/clients/${assignment.client_id}`);
 }
 
 export async function setWorkoutPlanStatus(planId: string, formData: FormData) {
