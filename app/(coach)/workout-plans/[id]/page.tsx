@@ -12,6 +12,52 @@ import {
   setWorkoutPlanStatus,
 } from "../actions";
 
+type WorkoutExercise = {
+  id: string;
+  name: string;
+  sets: number;
+  reps: string;
+  rest_seconds: number | null;
+  tempo: string | null;
+  target_load: string | null;
+  notes: string | null;
+  demo_url: string | null;
+  position: number;
+};
+
+type WorkoutDay = {
+  id: string;
+  name: string;
+  notes: string | null;
+  position: number;
+  workout_exercises: WorkoutExercise[];
+};
+
+type WorkoutAssignment = {
+  id: string;
+  starts_on: string;
+  ends_on: string;
+  status: string;
+  clients: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  } | null;
+};
+
+type WorkoutAssignmentRow = Omit<WorkoutAssignment, "clients"> & {
+  clients:
+    | WorkoutAssignment["clients"]
+    | NonNullable<WorkoutAssignment["clients"]>[];
+};
+
+function normalizeAssignment(row: WorkoutAssignmentRow): WorkoutAssignment {
+  return {
+    ...row,
+    clients: Array.isArray(row.clients) ? (row.clients[0] ?? null) : row.clients,
+  };
+}
+
 export default async function WorkoutPlanPage({
   params,
 }: {
@@ -29,30 +75,46 @@ export default async function WorkoutPlanPage({
     .eq("owner_id", user.id)
     .maybeSingle();
   if (!workspace) redirect("/onboarding");
-  const { data: plan } = await supabase
+  const { data: plan, error: planError } = await supabase
     .from("workout_plans")
-    .select(
-      "id, name, description, status, workout_days(id, name, notes, position, workout_exercises(id, name, sets, reps, rest_seconds, tempo, target_load, notes, demo_url, position)), workout_plan_assignments(id, starts_on, ends_on, status, clients(id, first_name, last_name))",
-    )
+    .select("id, name, description, status")
     .eq("id", id)
     .eq("workspace_id", workspace.id)
-    .order("position", { referencedTable: "workout_days", ascending: true })
-    .order("position", {
-      referencedTable: "workout_days.workout_exercises",
-      ascending: true,
-    })
     .maybeSingle();
+  if (planError) throw new Error("Unable to load workout plan.");
   if (!plan) notFound();
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("id, first_name, last_name")
-    .eq("workspace_id", workspace.id)
-    .eq("status", "active")
-    .order("first_name");
+
+  const [{ data: days, error: daysError }, { data: assignments, error: assignmentsError }, { data: clients }] =
+    await Promise.all([
+      supabase
+        .from("workout_days")
+        .select("id, name, notes, position, workout_exercises(id, name, sets, reps, rest_seconds, tempo, target_load, notes, demo_url, position)")
+        .eq("workout_plan_id", plan.id)
+        .order("position", { ascending: true })
+        .order("position", { referencedTable: "workout_exercises", ascending: true }),
+      supabase
+        .from("workout_plan_assignments")
+        .select("id, starts_on, ends_on, status, clients(id, first_name, last_name)")
+        .eq("workspace_id", workspace.id)
+        .eq("workout_plan_id", plan.id)
+        .order("starts_on", { ascending: false }),
+      supabase
+        .from("clients")
+        .select("id, first_name, last_name")
+        .eq("workspace_id", workspace.id)
+        .eq("status", "active")
+        .order("first_name"),
+    ]);
+
+  if (daysError) throw new Error("Unable to load workout days.");
+  if (assignmentsError) throw new Error("Unable to load workout assignments.");
+
   const changeStatus = setWorkoutPlanStatus.bind(null, plan.id);
   const assign = assignWorkoutPlan.bind(null, plan.id);
   const today = new Date().toISOString().slice(0, 10);
-  const activeAssignments = plan.workout_plan_assignments.filter((assignment) => assignment.status === "active");
+  const workoutDays = (days as WorkoutDay[] | null) ?? [];
+  const planAssignments = ((assignments as unknown as WorkoutAssignmentRow[] | null) ?? []).map(normalizeAssignment);
+  const activeAssignments = planAssignments.filter((assignment) => assignment.status === "active");
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
       <div className="mx-auto max-w-7xl">
@@ -66,7 +128,7 @@ export default async function WorkoutPlanPage({
                 {plan.status}
               </span>
               <span className="text-xs text-muted">
-                {plan.workout_days.length} training days
+                {workoutDays.length} training days
               </span>
             </div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -90,7 +152,7 @@ export default async function WorkoutPlanPage({
           </form>
         </header>
         <div className="mt-8 grid gap-5 xl:grid-cols-[1fr_22rem]">
-          <section className="space-y-5"><WorkoutDaysManager planId={plan.id} days={plan.workout_days} /></section>
+          <section className="space-y-5"><WorkoutDaysManager planId={plan.id} days={workoutDays} /></section>
           <aside className="space-y-5">
             <div className="rounded-[2rem] border border-border bg-surface p-6">
               <p className="text-xs font-bold uppercase tracking-[.16em] text-muted">
