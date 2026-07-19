@@ -7,18 +7,19 @@ import { useFormStatus } from "react-dom";
 import { cn } from "./cn";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
-type Size = "sm" | "md";
+type Size = "sm" | "md" | "lg";
 
-const base = "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60";
+const base = "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60";
 const variants: Record<Variant, string> = {
-  primary: "bg-brand text-white shadow-lg shadow-brand/15 hover:-translate-y-0.5 hover:bg-brand-strong",
-  secondary: "border border-border bg-surface text-foreground hover:border-brand/40 hover:bg-background",
+  primary: "bg-brand text-white shadow-sm hover:bg-brand-strong hover:shadow-md",
+  secondary: "border border-border bg-surface text-foreground shadow-sm hover:border-brand/35 hover:bg-surface-subtle",
   ghost: "text-brand hover:bg-brand/5",
   danger: "border border-red-200 bg-red-50 text-red-700 shadow-none hover:bg-red-100 hover:text-red-800",
 };
 const sizes: Record<Size, string> = {
   sm: "min-h-10 px-4 text-sm",
   md: "min-h-11 px-5 text-sm",
+  lg: "min-h-12 px-6 text-sm",
 };
 
 export function buttonClassName({ variant = "primary", size = "md", className }: { variant?: Variant; size?: Size; className?: string } = {}) {

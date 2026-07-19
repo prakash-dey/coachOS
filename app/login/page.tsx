@@ -3,6 +3,8 @@ import { startDemo } from "@/app/demo/actions";
 import { Button } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
 import { GoogleIcon } from "@/app/components/ui/GoogleIcon";
+import { BrandLink } from "@/app/components/ui/Brand";
+import { Card } from "@/app/components/ui/Layout";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -32,12 +34,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       : null;
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <section className="w-full max-w-md">
-        <p className="mb-2 text-sm font-medium">CoachOS</p>
-        <h1 className="text-3xl font-semibold">Sign in to CoachOS</h1>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12">
+      <div aria-hidden="true" className="absolute -left-32 -top-32 size-96 rounded-full bg-accent/25 blur-3xl" />
+      <Card className="relative w-full max-w-md p-7 sm:p-9">
+        <BrandLink />
+        <p className="mt-10 text-xs font-bold uppercase tracking-[.18em] text-brand">Welcome back</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Sign in to your workspace</h1>
 
-        <p className="mt-3 text-gray-600">Continue securely with your Google account.</p>
+        <p className="mt-3 text-sm leading-6 text-muted">Continue securely with your Google account to manage your coaching business.</p>
 
         {errorMessage && (
           <Alert tone="error" className="mt-6">{errorMessage}</Alert>
@@ -51,12 +55,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <Button type="submit" variant="secondary" className="w-full"><GoogleIcon />Continue with Google</Button>
         </form>
 
-        <div className="mt-6 border-t border-gray-200 pt-6">
+        <div className="mt-6 border-t border-border pt-6">
           <form action={startDemo}>
             <Button type="submit" variant="ghost" className="w-full">Explore demo</Button>
           </form>
         </div>
-      </section>
+      </Card>
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { signOut } from "@/app/auth/actions";
 import { Button } from "@/app/components/ui/Button";
+import { BrandLink } from "@/app/components/ui/Brand";
 import { leaveDemo } from "@/app/demo/actions";
 
 type CoachShellProps = Readonly<{
@@ -38,18 +39,16 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
   const sidebar = (
     <div className="flex h-full flex-col bg-brand-strong text-white">
       <div className="border-b border-white/10 px-5 py-5">
-        <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="inline-flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-sm font-black text-brand-strong">C</span>
-          <span className="text-lg font-semibold tracking-tight">CoachOS</span>
-        </Link>
+        <BrandLink href="/dashboard" inverse className="focus-visible:outline-accent" />
       </div>
 
-      <div className="px-5 py-5">
-        <p className="truncate text-sm font-semibold">{workspaceName}</p>
-        <p className="mt-1 truncate text-xs text-white/60">{userEmail}</p>
+      <div className="px-5 pb-4 pt-6">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-white/40">Workspace</p>
+        <p className="mt-2 truncate text-sm font-semibold">{workspaceName}</p>
+        <p className="mt-1 truncate text-xs text-white/50">{userEmail}</p>
       </div>
 
-      <nav aria-label="Coach workspace" className="flex-1 space-y-1 px-3">
+      <nav aria-label="Coach workspace" className="flex-1 space-y-1 px-3 py-3">
         {navigation.map((item) => {
           const active = item.href ? pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`)) : false;
 
@@ -63,7 +62,8 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
           }
 
           return (
-            <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${active ? "bg-white text-brand-strong" : "text-white/75 hover:bg-white/10 hover:text-white"}`}>
+            <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`relative flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${active ? "bg-white/12 text-white shadow-sm" : "text-white/65 hover:bg-white/7 hover:text-white"}`}>
+              {active && <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-accent" />}
               <NavIcon>{item.icon}</NavIcon>{item.label}
             </Link>
           );
@@ -81,11 +81,11 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
   );
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
       <aside className="hidden h-screen lg:sticky lg:top-0 lg:block">{sidebar}</aside>
       <div className="min-w-0">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:hidden">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-xs font-black text-white">C</span>CoachOS</Link>
+          <BrandLink href="/dashboard" />
           <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation" title="Open navigation" aria-expanded={menuOpen} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground">
             <NavIcon><path d="M4 6h16M4 12h16M4 18h16" /></NavIcon>
           </button>
@@ -103,7 +103,7 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
           </div>
         )}
 
-        {isDemo && <div className="border-b border-[#d4b735] bg-[#fff4b8] px-4 py-2.5 text-center text-xs font-semibold text-[#624f0b]">Demo workspace · All people and data are fictional · Expires {demoExpiresAt ? new Date(demoExpiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "soon"}</div>}
+        {isDemo && <div className="border-b border-[#d4b735] bg-[#fff4b8] px-4 py-2.5 text-center text-xs font-semibold text-[#624f0b]">Demo workspace · All people and data are fictional · Expires {demoExpiresAt ? new Date(demoExpiresAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Kolkata" }) : "soon"}</div>}
         <div className="min-h-[calc(100vh-4rem)]">{children}</div>
       </div>
     </div>
