@@ -1,8 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-
 type PlanCardMetric = {
-  icon: ReactNode;
   value: number | string;
   label: string;
 };
@@ -18,13 +15,10 @@ type PlanCardProps = {
   fallbackDescription: string;
 };
 
-function PlanCardMetric({ icon, value, label }: PlanCardMetric) {
+function PlanCardMetric({ value, label }: PlanCardMetric) {
   return (
-    <div className="flex h-11 min-w-0 items-center justify-center gap-1.5 overflow-hidden">
-      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/65 text-brand shadow-sm ring-1 ring-black/5 [&>svg]:h-3 [&>svg]:w-3">
-        {icon}
-      </span>
-      <span className="min-w-0 overflow-hidden text-left leading-none">
+    <div className="flex h-11 min-w-0 items-center justify-center overflow-hidden text-center">
+      <span className="min-w-0 overflow-hidden leading-none">
         <b className="block whitespace-nowrap text-[13px] leading-none tracking-tight">
           {value}
         </b>
