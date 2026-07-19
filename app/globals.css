@@ -1,25 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3f5ef;
-  --foreground: #18352c;
+  --background: #f6f7f4;
+  --foreground: #172b25;
   --surface: #ffffff;
-  --muted: #64756e;
-  --border: #dce6df;
-  --brand: #216e53;
-  --brand-strong: #15523d;
-  --accent: #d9f45f;
+  --surface-subtle: #eef2ed;
+  --muted: #66756f;
+  --border: #dfe5e1;
+  --brand: #1d6b50;
+  --brand-strong: #103f31;
+  --accent: #dff36b;
+  --danger: #b42318;
+  --shadow-card: 0 1px 2px rgb(16 63 49 / 0.04), 0 12px 32px rgb(16 63 49 / 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-accent: var(--accent);
+  --color-danger: var(--danger);
+
+  --shadow-card: var(--shadow-card);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -30,6 +37,21 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+*:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 82%, white);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 ::selection {

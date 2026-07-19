@@ -9,13 +9,13 @@ export default function HeroSection() {
         className="absolute -right-32 top-10 size-96 rounded-full bg-accent/30 blur-3xl"
       />
 
-      <div className="relative mx-auto grid max-w-7xl gap-14 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1fr_0.9fr] lg:items-center lg:py-28">
+      <div className="relative mx-auto grid max-w-7xl gap-14 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1fr_0.9fr] lg:items-center lg:py-32">
         <div>
           <p className="mb-5 inline-flex rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-brand">
             Built for modern health and fitness coaches
           </p>
 
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.045em] sm:text-5xl lg:text-[4rem] lg:leading-[1.04]">
             Spend less time managing.
             <span className="block text-brand">
               Spend more time coaching.
