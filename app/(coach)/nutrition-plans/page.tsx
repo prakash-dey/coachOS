@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { FlameIcon, MealIcon, ProteinIcon, UserPlusIcon } from "@/app/components/ui/Icons";
 import { PlanCard } from "@/app/components/ui/PlanCard";
 import { getCoachContext } from "@/lib/auth-context";
 import { getNutritionPlanLibrary } from "@/lib/coach-data";
@@ -46,10 +45,10 @@ export default async function NutritionPlansPage() {
                   statusClassName={statusClass}
                   fallbackDescription="A flexible daily food framework."
                   metrics={[
-                    { icon: <FlameIcon />, value: plan.daily_calories ?? "—", label: "kcal" },
-                    { icon: <ProteinIcon />, value: plan.protein_grams ?? "—", label: "protein" },
-                    { icon: <MealIcon />, value: meals, label: "meals" },
-                    { icon: <UserPlusIcon />, value: assigned, label: "assigned" },
+                    { value: plan.daily_calories ?? "—", label: "kcal" },
+                    { value: plan.protein_grams ?? "—", label: "protein" },
+                    { value: meals, label: "meals" },
+                    { value: assigned, label: "assigned" },
                   ]}
                 />
               );
