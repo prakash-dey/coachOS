@@ -47,7 +47,7 @@ export async function updateClient(
     timezone.length < 1 || timezone.length > 100;
 
   const statusIsInvalid =
-    status !== "active" && status !== "archived";
+    status !== "active" && status !== "paused" && status !== "archived";
 
   if (
     nameIsInvalid ||
@@ -102,6 +102,13 @@ export async function updateClient(
   if (updateError || !updatedClient) {
     redirect(`/clients/${clientId}/edit?error=update_failed`);
   }
+
+  const { error: statusError } = await supabase.rpc("set_client_status", {
+    target_client_id: clientId,
+    requested_status: status,
+  });
+
+  if (statusError) redirect(`/clients/${clientId}/edit?error=update_failed`);
 
   revalidatePath("/clients");
   revalidatePath(`/clients/${clientId}`);

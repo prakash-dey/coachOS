@@ -162,6 +162,7 @@ export default async function EditClientPage({
               defaultValue={client.status}
             >
               <option value="active">Active</option>
+              <option value="paused">Paused</option>
               <option value="archived">Archived</option>
             </Select>
           </Field>

@@ -4,6 +4,7 @@ import InviteClient from "./InviteClient";
 import { createClient } from "@/lib/supabase/server";
 import { previewDemoClient } from "@/app/demo/actions";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
+import ClientLifecycleActions from "./ClientLifecycleActions";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -51,7 +52,7 @@ export default async function ClientDetailPage({
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select(
-      "id, first_name, last_name, email, phone, status, timezone, created_at",
+      "id, first_name, last_name, email, phone, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(name, duration_weeks))",
     )
     .eq("id", id)
     .eq("workspace_id", workspace.id)
@@ -69,6 +70,26 @@ export default async function ClientDetailPage({
     dateStyle: "medium",
   }).format(new Date(client.created_at));
   const previewClient = previewDemoClient.bind(null, client.id);
+  const courseAccess = [
+    ...client.workout_plan_assignments.map((assignment) => ({
+      id: assignment.id,
+      type: "Workout",
+      name: (assignment.workout_plans as unknown as { name: string; duration_weeks: number } | null)?.name ?? "Workout plan",
+      durationWeeks: (assignment.workout_plans as unknown as { name: string; duration_weeks: number } | null)?.duration_weeks,
+      status: assignment.status,
+      startsOn: assignment.starts_on,
+      endsOn: assignment.ends_on,
+    })),
+    ...client.nutrition_plan_assignments.map((assignment) => ({
+      id: assignment.id,
+      type: "Nutrition",
+      name: (assignment.nutrition_plans as unknown as { name: string; duration_weeks: number } | null)?.name ?? "Nutrition plan",
+      durationWeeks: (assignment.nutrition_plans as unknown as { name: string; duration_weeks: number } | null)?.duration_weeks,
+      status: assignment.status,
+      startsOn: assignment.starts_on,
+      endsOn: assignment.ends_on,
+    })),
+  ].sort((a, b) => b.startsOn.localeCompare(a.startsOn));
 
   return (
     <main className="min-h-screen px-6 py-10">
@@ -125,6 +146,24 @@ export default async function ClientDetailPage({
             </div>
           </dl>
         </div>
+        <section className="mt-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Course access</p>
+              <h2 className="mt-1 text-2xl font-semibold">Subscribed plans</h2>
+            </div>
+            <span className="rounded-full bg-background px-3 py-1 text-xs font-bold text-muted">{courseAccess.length} total</span>
+          </div>
+          {courseAccess.length ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {courseAccess.map((course) => {
+                const expired = Boolean(course.endsOn && course.endsOn < new Date().toISOString().slice(0, 10));
+                return <article key={`${course.type}-${course.id}`} className="rounded-[1.5rem] border border-border bg-surface p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-muted">{course.type}</p><h3 className="mt-1 font-semibold">{course.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${expired ? "bg-red-50 text-red-700" : "bg-[#e4f4de] text-brand"}`}>{expired ? "Expired" : course.status}</span></div><dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-muted">Access period</dt><dd className="mt-1 font-medium">{course.durationWeeks ?? "—"} weeks</dd></div><div><dt className="text-xs text-muted">Ends</dt><dd className="mt-1 font-medium">{course.endsOn ?? "No expiry"}</dd></div></dl></article>;
+              })}
+            </div>
+          ) : <div className="mt-4 rounded-[1.5rem] border border-dashed border-border bg-surface p-6 text-sm text-muted">No workout or nutrition plans have been assigned yet.</div>}
+        </section>
+        <ClientLifecycleActions clientId={client.id} status={client.status} />
         {!workspace.is_demo && <InviteClient clientId={client.id} canInvite={client.status === "active" && Boolean(client.email)} />}
       </section>
     </main>

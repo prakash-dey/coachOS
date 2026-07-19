@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { signOut } from "@/app/auth/actions";
+import { Button } from "@/app/components/ui/Button";
 import { leaveDemo } from "@/app/demo/actions";
 
 type CoachShellProps = Readonly<{
@@ -71,9 +72,9 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
 
       <div className="border-t border-white/10 p-3">
         <form action={isDemo ? leaveDemo : signOut}>
-          <button type="submit" className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+          <Button type="submit" variant="ghost" pendingLabel={isDemo ? "Exiting…" : "Signing out…"} className="w-full justify-start rounded-lg px-3 text-white/75 shadow-none hover:translate-y-0 hover:bg-white/10 hover:text-white focus-visible:outline-accent">
             <NavIcon><path d="M10 17l5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /></NavIcon>{isDemo ? "Exit demo" : "Sign out"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>
