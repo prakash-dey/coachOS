@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
 import { Field, Input } from "@/app/components/ui/FormControls";
+import { BrandLink } from "@/app/components/ui/Brand";
 
 import { completeOnboarding } from "./actions";
 
@@ -52,8 +53,8 @@ export default async function OnboardingPage({
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <section className="w-full max-w-md">
-        <p className="text-sm font-medium">CoachOS</p>
-        <h1 className="mt-2 text-3xl font-semibold">
+        <BrandLink />
+        <h1 className="mt-8 text-3xl font-semibold">
           Set up your coaching workspace
         </h1>
 
