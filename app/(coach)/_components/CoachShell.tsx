@@ -86,17 +86,17 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
       <div className="min-w-0">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:hidden">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-xs font-black text-white">C</span>CoachOS</Link>
-          <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation" aria-expanded={menuOpen} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground">
+          <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation" title="Open navigation" aria-expanded={menuOpen} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground">
             <NavIcon><path d="M4 6h16M4 12h16M4 18h16" /></NavIcon>
           </button>
         </header>
 
         {menuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <button type="button" aria-label="Close navigation" className="absolute inset-0 bg-black/45" onClick={() => setMenuOpen(false)} />
+            <button type="button" aria-label="Close navigation" title="Close navigation" className="absolute inset-0 bg-black/45" onClick={() => setMenuOpen(false)} />
             <aside className="absolute inset-y-0 left-0 w-[min(19rem,85vw)] shadow-2xl">
               {sidebar}
-              <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close navigation" className="absolute right-3 top-4 grid min-h-11 min-w-11 place-items-center rounded-lg text-white/75 hover:bg-white/10">
+              <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close navigation" title="Close navigation" className="absolute right-3 top-4 grid min-h-11 min-w-11 place-items-center rounded-lg text-white/75 hover:bg-white/10">
                 <NavIcon><path d="m6 6 12 12M18 6 6 18" /></NavIcon>
               </button>
             </aside>
