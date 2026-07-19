@@ -17,6 +17,8 @@ export default async function ClientLayout({ children }: { children: React.React
     .maybeSingle();
 
   if (!membership || membership.role !== "client" || membership.status !== "active") redirect("/auth/continue");
+  const { data: activeClient } = await supabase.from("clients").select("id").eq("workspace_id", membership.workspace_id).eq("user_id", user.id).eq("status", "active").maybeSingle();
+  if (!activeClient) redirect("/auth/continue");
   const workspace = membership.workspaces as unknown as { name: string; is_demo: boolean; demo_expires_at: string | null } | null;
   if (workspace?.is_demo && workspace.demo_expires_at && new Date(workspace.demo_expires_at) <= new Date()) redirect("/");
 

@@ -1,5 +1,8 @@
+"use client";
+
 import Link, { type LinkProps } from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from "react";
+import { useFormStatus } from "react-dom";
 
 import { cn } from "./cn";
 
@@ -25,10 +28,14 @@ export function buttonClassName({ variant = "primary", size = "md", className }:
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
   size?: Size;
+  pendingLabel?: string;
 };
 
-export function Button({ variant = "primary", size = "md", className, type = "button", ...props }: ButtonProps) {
-  return <button type={type} className={buttonClassName({ variant, size, className })} {...props} />;
+export function Button({ variant = "primary", size = "md", className, type = "button", pendingLabel = "Working…", disabled, children, ...props }: ButtonProps) {
+  const { pending } = useFormStatus();
+  const isPendingSubmit = type === "submit" && pending;
+
+  return <button type={type} disabled={disabled || isPendingSubmit} aria-busy={isPendingSubmit || undefined} className={buttonClassName({ variant, size, className })} {...props}>{isPendingSubmit ? <><span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />{pendingLabel}</> : children}</button>;
 }
 
 type ButtonLinkProps = LinkProps & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> & {

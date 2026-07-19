@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -10,6 +11,32 @@ export type InvitationState = {
   invitationUrl?: string;
   expiresAt?: string;
 };
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function changeClientStatus(clientId: string, status: "active" | "paused" | "archived") {
+  if (!uuidPattern.test(clientId) || !["active", "paused", "archived"].includes(status)) {
+    throw new Error("Invalid client update.");
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { error } = await supabase.rpc("set_client_status", { target_client_id: clientId, requested_status: status });
+  if (error) throw new Error("Unable to update the client status.");
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function deleteClient(clientId: string) {
+  if (!uuidPattern.test(clientId)) throw new Error("Invalid client.");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { error } = await supabase.rpc("delete_client", { target_client_id: clientId });
+  if (error) throw new Error("Unable to delete the client.");
+  revalidatePath("/clients");
+  redirect("/clients");
+}
 
 export async function createInvitation(
   clientId: string,
