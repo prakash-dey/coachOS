@@ -22,11 +22,13 @@ export type EditableExercise = {
 
 export default function WorkoutExerciseEditor({ planId, dayId, exercises }: { planId: string; dayId: string; exercises: EditableExercise[] }) {
   const [editing, setEditing] = useState<EditableExercise | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   async function save(formData: FormData) {
     if (editing) await updateExercise(planId, dayId, editing.id, formData);
     else await addExercise(planId, dayId, formData);
     setEditing(null);
+    setIsAdding(false);
   }
 
   return (
@@ -45,7 +47,7 @@ export default function WorkoutExerciseEditor({ planId, dayId, exercises }: { pl
                 <span className="rounded-full bg-background px-3 py-1 text-sm font-bold">{exercise.sets} sets</span>
                 <span className="rounded-full bg-[#fff0e7] px-3 py-1 text-sm font-bold text-[#9a4a21]">{exercise.reps} reps</span>
                 <div className="flex gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(exercise)} aria-label={`Edit ${exercise.name}`} title={`Edit ${exercise.name}`}><PencilIcon /></Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => { setIsAdding(false); setEditing(exercise); }} aria-label={`Edit ${exercise.name}`} title={`Edit ${exercise.name}`}><PencilIcon /></Button>
                   <form action={remove}>
                     <ConfirmSubmitButton variant="danger" size="sm" pendingLabel="Deleting…" message={`Delete ${exercise.name}?`} aria-label={`Delete ${exercise.name}`} title={`Delete ${exercise.name}`}><TrashIcon /></ConfirmSubmitButton>
                   </form>
@@ -57,24 +59,30 @@ export default function WorkoutExerciseEditor({ planId, dayId, exercises }: { pl
         {!exercises.length && <p className="px-6 py-5 text-sm text-muted">No exercises in this day yet.</p>}
       </div>
 
-      <form key={editing?.id ?? "new"} action={save} className="grid gap-3 border-t border-border bg-background/70 p-5 sm:grid-cols-4">
-        <div className="sm:col-span-4">
-          <p className="font-semibold">{editing ? `Editing ${editing.name}` : "Add an exercise"}</p>
-          <p className="mt-1 text-xs text-muted">{editing ? "Update the fields below and save your changes." : "Build the prescription your client will follow."}</p>
-        </div>
-        <Input name="name" required maxLength={160} defaultValue={editing?.name ?? ""} placeholder="Exercise" className="bg-white sm:col-span-2" />
-        <Input name="sets" type="number" min="1" max="20" required defaultValue={editing?.sets ?? ""} placeholder="Sets" className="bg-white" />
-        <Input name="reps" required maxLength={50} defaultValue={editing?.reps ?? ""} placeholder="Reps or duration" className="bg-white" />
-        <Input name="restSeconds" type="number" min="0" max="3600" defaultValue={editing?.rest_seconds ?? ""} placeholder="Rest seconds" className="bg-white sm:col-span-2" />
-        <Input name="targetLoad" maxLength={80} defaultValue={editing?.target_load ?? ""} placeholder="Load, e.g. 20 kg or RPE 8" className="bg-white sm:col-span-2" />
-        <Input name="tempo" maxLength={50} defaultValue={editing?.tempo ?? ""} placeholder="Tempo, e.g. 3-1-1-0" className="bg-white sm:col-span-2" />
-        <Input name="demoUrl" type="url" maxLength={2048} defaultValue={editing?.demo_url ?? ""} placeholder="Demo video URL" className="bg-white sm:col-span-2" />
-        <Textarea name="notes" maxLength={3000} rows={2} defaultValue={editing?.notes ?? ""} placeholder="Coaching instructions" className="bg-white sm:col-span-4" />
-        <div className="flex flex-wrap gap-3 sm:col-span-4">
-          <Button type="submit" pendingLabel={editing ? "Saving exercise…" : "Adding exercise…"} className="rounded-xl" aria-label={editing ? "Save exercise" : "Add exercise"} title={editing ? "Save exercise" : "Add exercise"}>{editing ? <CheckIcon /> : <PlusIcon />}</Button>
-          {editing && <Button type="button" variant="danger" onClick={() => setEditing(null)} aria-label="Cancel editing" title="Cancel editing"><XIcon /></Button>}
-        </div>
-      </form>
+      <div className="border-t border-border bg-background/70 p-5">
+        {!editing && !isAdding && <Button type="button" variant="secondary" size="sm" onClick={() => setIsAdding(true)} aria-label="Add exercise" title="Add exercise"><PlusIcon /> Add exercise</Button>}
+
+        {(editing || isAdding) && (
+          <form key={editing?.id ?? "new"} action={save} className="grid gap-3 sm:grid-cols-4">
+            <div className="sm:col-span-4">
+              <p className="font-semibold">{editing ? `Editing ${editing.name}` : "Add an exercise"}</p>
+              <p className="mt-1 text-xs text-muted">{editing ? "Update the fields below and save your changes." : "Build the prescription your client will follow."}</p>
+            </div>
+            <Input name="name" required maxLength={160} defaultValue={editing?.name ?? ""} placeholder="Exercise" className="bg-white sm:col-span-2" />
+            <Input name="sets" type="number" min="1" max="20" required defaultValue={editing?.sets ?? ""} placeholder="Sets" className="bg-white" />
+            <Input name="reps" required maxLength={50} defaultValue={editing?.reps ?? ""} placeholder="Reps or duration" className="bg-white" />
+            <Input name="restSeconds" type="number" min="0" max="3600" defaultValue={editing?.rest_seconds ?? ""} placeholder="Rest seconds" className="bg-white sm:col-span-2" />
+            <Input name="targetLoad" maxLength={80} defaultValue={editing?.target_load ?? ""} placeholder="Load, e.g. 20 kg or RPE 8" className="bg-white sm:col-span-2" />
+            <Input name="tempo" maxLength={50} defaultValue={editing?.tempo ?? ""} placeholder="Tempo, e.g. 3-1-1-0" className="bg-white sm:col-span-2" />
+            <Input name="demoUrl" type="url" maxLength={2048} defaultValue={editing?.demo_url ?? ""} placeholder="Demo video URL" className="bg-white sm:col-span-2" />
+            <Textarea name="notes" maxLength={3000} rows={2} defaultValue={editing?.notes ?? ""} placeholder="Coaching instructions" className="bg-white sm:col-span-4" />
+            <div className="flex flex-wrap gap-3 sm:col-span-4">
+              <Button type="submit" pendingLabel={editing ? "Saving exercise…" : "Adding exercise…"} className="rounded-xl" aria-label={editing ? "Save exercise" : "Add exercise"} title={editing ? "Save exercise" : "Add exercise"}>{editing ? <CheckIcon /> : <PlusIcon />}</Button>
+              <Button type="button" variant="danger" onClick={() => { setEditing(null); setIsAdding(false); }} aria-label="Cancel editing" title="Cancel editing"><XIcon /></Button>
+            </div>
+          </form>
+        )}
+      </div>
     </>
   );
 }

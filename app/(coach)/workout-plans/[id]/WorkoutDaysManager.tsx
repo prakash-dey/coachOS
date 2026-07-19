@@ -19,10 +19,18 @@ type WorkoutDay = {
 
 export default function WorkoutDaysManager({ planId, days }: { planId: string; days: WorkoutDay[] }) {
   const [editingDay, setEditingDay] = useState<WorkoutDay | null>(null);
+  const [isAddingDay, setIsAddingDay] = useState(false);
   const dayFormRef = useRef<HTMLFormElement>(null);
 
   function beginEditing(day: WorkoutDay) {
+    setIsAddingDay(false);
     setEditingDay(day);
+    requestAnimationFrame(() => dayFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
+
+  function beginAdding() {
+    setEditingDay(null);
+    setIsAddingDay(true);
     requestAnimationFrame(() => dayFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
   }
 
@@ -30,10 +38,15 @@ export default function WorkoutDaysManager({ planId, days }: { planId: string; d
     if (editingDay) await updateWorkoutDay(planId, editingDay.id, formData);
     else await addWorkoutDay(planId, formData);
     setEditingDay(null);
+    setIsAddingDay(false);
   }
 
   return (
     <>
+      <div className="flex justify-end">
+        <Button type="button" variant="secondary" onClick={beginAdding} aria-label="Add training day" title="Add training day"><PlusIcon /> Add day</Button>
+      </div>
+
       {days.map((day, dayIndex) => {
         const removeDay = deleteWorkoutDay.bind(null, planId, day.id);
         return (
@@ -51,16 +64,18 @@ export default function WorkoutDaysManager({ planId, days }: { planId: string; d
         );
       })}
 
-      <form ref={dayFormRef} key={editingDay?.id ?? "new-day"} action={saveDay} className="rounded-[2rem] border border-dashed border-brand/30 bg-surface p-6">
-        <h2 className="font-semibold">{editingDay ? `Editing ${editingDay.name}` : "Add a training day"}</h2>
-        <p className="mt-1 text-xs text-muted">{editingDay ? "Update this day using the same fields." : "Create the next day in this workout plan."}</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-          <Input name="name" required maxLength={120} defaultValue={editingDay?.name ?? ""} placeholder="e.g. Lower body" />
-          <Input name="notes" maxLength={3000} defaultValue={editingDay?.notes ?? ""} placeholder="Optional focus" />
-          <Button type="submit" pendingLabel={editingDay ? "Saving day…" : "Adding day…"} className="rounded-xl" aria-label={editingDay ? "Save day" : "Add day"} title={editingDay ? "Save day" : "Add day"}>{editingDay ? <CheckIcon /> : <PlusIcon />}</Button>
-        </div>
-        {editingDay && <Button type="button" variant="danger" size="sm" className="mt-3" onClick={() => setEditingDay(null)} aria-label="Cancel editing" title="Cancel editing"><XIcon /></Button>}
-      </form>
+      {(editingDay || isAddingDay) && (
+        <form ref={dayFormRef} key={editingDay?.id ?? "new-day"} action={saveDay} className="rounded-[2rem] border border-dashed border-brand/30 bg-surface p-6">
+          <h2 className="font-semibold">{editingDay ? `Editing ${editingDay.name}` : "Add a training day"}</h2>
+          <p className="mt-1 text-xs text-muted">{editingDay ? "Update this day using the same fields." : "Create the next day in this workout plan."}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+            <Input name="name" required maxLength={120} defaultValue={editingDay?.name ?? ""} placeholder="e.g. Lower body" />
+            <Input name="notes" maxLength={3000} defaultValue={editingDay?.notes ?? ""} placeholder="Optional focus" />
+            <Button type="submit" pendingLabel={editingDay ? "Saving day…" : "Adding day…"} className="rounded-xl" aria-label={editingDay ? "Save day" : "Add day"} title={editingDay ? "Save day" : "Add day"}>{editingDay ? <CheckIcon /> : <PlusIcon />}</Button>
+          </div>
+          <Button type="button" variant="danger" size="sm" className="mt-3" onClick={() => { setEditingDay(null); setIsAddingDay(false); }} aria-label="Cancel editing" title="Cancel editing"><XIcon /></Button>
+        </form>
+      )}
     </>
   );
 }
