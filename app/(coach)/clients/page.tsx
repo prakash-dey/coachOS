@@ -1,33 +1,26 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { ButtonLink } from "@/app/components/ui/Button";
 import { Badge, Card, Page, PageHeader, StatCard } from "@/app/components/ui/Layout";
 import { PlusIcon } from "@/app/components/ui/Icons";
-import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
+import { getClientRoster } from "@/lib/coach-data";
 
 export default async function ClientsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { workspace } = await getCoachContext();
+  const clients = await getClientRoster(workspace.id);
 
-  const { data: workspace } = await supabase.from("workspaces").select("id, name").eq("owner_id", user.id).maybeSingle();
-  if (!workspace) redirect("/onboarding");
-
-  const { data: clients, error } = await supabase.from("clients").select("id, first_name, last_name, email, phone, status, user_id, check_ins(week_start, energy_score, mood_score)").eq("workspace_id", workspace.id).order("first_name");
-  if (error) throw new Error("Unable to load clients.");
-
-  const active = clients?.filter((client) => client.status === "active").length ?? 0;
-  const connected = clients?.filter((client) => client.user_id).length ?? 0;
+  const active = clients.filter((client) => client.status === "active").length;
+  const connected = clients.filter((client) => client.user_id).length;
 
   return (
     <Page>
       <PageHeader eyebrow="Client management" title="Clients" description="Your complete roster, latest signals, and portal access in one place." actions={<ButtonLink href="/clients/new"><PlusIcon /> Add client</ButtonLink>} />
 
       <section aria-label="Roster overview" className="mt-8 grid gap-3 sm:grid-cols-3">
-        <StatCard label="Total roster" value={clients?.length ?? 0} detail="All non-archived clients" tone="brand" />
+        <StatCard label="Total roster" value={clients.length} detail="All non-archived clients" tone="brand" />
         <StatCard label="Active clients" value={active} detail="Currently receiving coaching" />
-        <StatCard label="Portal connected" value={connected} detail={`${Math.max(0, (clients?.length ?? 0) - connected)} invitations pending`} tone="lavender" />
+        <StatCard label="Portal connected" value={connected} detail={`${Math.max(0, clients.length - connected)} invitations pending`} tone="lavender" />
       </section>
 
       {clients?.length ? (
