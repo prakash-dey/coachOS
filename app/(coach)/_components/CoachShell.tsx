@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { signOut } from "@/app/auth/actions";
 import { Button } from "@/app/components/ui/Button";
+import { BrandLogo } from "@/app/components/ui/BrandLogo";
 import { leaveDemo } from "@/app/demo/actions";
 
 type CoachShellProps = Readonly<{
@@ -38,10 +39,7 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
   const sidebar = (
     <div className="flex h-full flex-col bg-brand-strong text-white">
       <div className="border-b border-white/10 px-5 py-5">
-        <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="inline-flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-sm font-black text-brand-strong">C</span>
-          <span className="text-lg font-semibold tracking-tight">CoachOS</span>
-        </Link>
+        <BrandLogo href="/dashboard" inverse className="focus-visible:outline-accent" />
       </div>
 
       <div className="px-5 py-5">
@@ -85,7 +83,7 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
       <aside className="hidden h-screen lg:sticky lg:top-0 lg:block">{sidebar}</aside>
       <div className="min-w-0">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:hidden">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-xs font-black text-white">C</span>CoachOS</Link>
+          <BrandLogo href="/dashboard" />
           <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation" title="Open navigation" aria-expanded={menuOpen} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground">
             <NavIcon><path d="M4 6h16M4 12h16M4 18h16" /></NavIcon>
           </button>

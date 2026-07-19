@@ -1,24 +1,12 @@
-import Link from "next/link";
 import { startDemo } from "@/app/demo/actions";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { BrandLogo } from "@/app/components/ui/BrandLogo";
 
 export default function MarketingHeader() {
   return (
     <header className="border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <Link
-          href="/"
-          aria-label="CoachOS home"
-          className="flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
-        >
-          <span className="flex size-10 items-center justify-center rounded-xl bg-brand text-lg font-bold text-white">
-            C
-          </span>
-
-          <span className="text-xl font-bold tracking-tight">
-            CoachOS
-          </span>
-        </Link>
+        <BrandLogo />
 
         <nav aria-label="Main navigation" className="flex items-center gap-3">
           <form action={startDemo}>
