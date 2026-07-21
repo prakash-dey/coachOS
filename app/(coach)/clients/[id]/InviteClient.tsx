@@ -56,19 +56,18 @@ export default function InviteClient({
         <h2 className="text-lg font-semibold">Client invitation</h2>
 
         <p className="mt-2 text-sm text-gray-600">
-          Add an email address and set this client to active before
-          generating an invitation.
+          Set this client to active before generating an invitation.
         </p>
       </section>
     );
   }
 
   return (
-    <section className="mt-8 rounded-lg border border-gray-200 p-5">
+    <section id="invitation" className="mt-8 rounded-lg border border-gray-200 p-5">
       <h2 className="text-lg font-semibold">Client invitation</h2>
 
       <p className="mt-2 text-sm text-gray-600">
-        Generate a single-use link that expires after 24 hours.
+        Generate a single-use link that expires after 24 hours. The client can join with Google or email/password, and CoachOS will save the email they choose.
       </p>
 
       <form action={formAction} className="mt-4">

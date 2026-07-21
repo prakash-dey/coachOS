@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -13,6 +14,16 @@ export type InvitationState = {
 };
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function createInvitationToken() {
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+
+  return {
+    token,
+    tokenHash,
+  };
+}
 
 export async function changeClientStatus(clientId: string, status: "active" | "paused" | "archived") {
   if (!uuidPattern.test(clientId) || !["active", "paused", "archived"].includes(status)) {
@@ -76,15 +87,68 @@ export async function createInvitation(
     },
   );
 
+  let invitation = data?.[0];
+
   if (error) {
-    return {
-      status: "error",
-      message:
-        "Unable to create an invitation. Make sure the client is active and has an email address.",
+    const { data: workspace, error: workspaceError } = await supabase
+      .from("workspaces")
+      .select("id")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (workspaceError || !workspace) {
+      return {
+        status: "error",
+        message: "Unable to create an invitation. Make sure the client is active.",
+      };
+    }
+
+    const { data: client, error: clientError } = await supabase
+      .from("clients")
+      .select("id, workspace_id, status")
+      .eq("id", clientId)
+      .eq("workspace_id", workspace.id)
+      .maybeSingle();
+
+    if (clientError || !client || client.status !== "active") {
+      return {
+        status: "error",
+        message: "Unable to create an invitation. Make sure the client is active.",
+      };
+    }
+
+    await supabase
+      .from("workspace_invitations")
+      .update({ status: "revoked" })
+      .eq("client_id", clientId)
+      .eq("status", "pending");
+
+    const { token, tokenHash } = createInvitationToken();
+    const invitationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: insertError } = await supabase
+      .from("workspace_invitations")
+      .insert({
+        workspace_id: workspace.id,
+        client_id: client.id,
+        created_by: user.id,
+        token_hash: tokenHash,
+        status: "pending",
+        expires_at: invitationExpiresAt,
+      });
+
+    if (insertError) {
+      return {
+        status: "error",
+        message: "Unable to create an invitation right now. Please try again.",
+      };
+    }
+
+    invitation = {
+      token,
+      invitation_expires_at: invitationExpiresAt,
     };
   }
-
-  const invitation = data?.[0];
 
   if (
     !invitation?.token ||

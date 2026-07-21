@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
+import { Field, Input } from "@/app/components/ui/FormControls";
 import { GoogleIcon } from "@/app/components/ui/GoogleIcon";
 import { BrandLink } from "@/app/components/ui/Brand";
 
-import { acceptInvitation, signInWithGoogleForInvitation } from "./actions";
+import { acceptInvitation, continueWithEmailForInvitation, signInWithGoogleForInvitation } from "./actions";
 
 type JoinPageProps = {
   params: Promise<{
@@ -15,6 +16,7 @@ type JoinPageProps = {
 
   searchParams: Promise<{
     error?: string;
+    message?: string;
   }>;
 };
 
@@ -51,6 +53,7 @@ export default async function JoinPage({
   } = await supabase.auth.getUser();
 
   const signInForInvitation = signInWithGoogleForInvitation.bind(null, token);
+  const continueWithEmail = continueWithEmailForInvitation.bind(null, token);
 
   const acceptCurrentInvitation = acceptInvitation.bind(null, token);
 
@@ -60,10 +63,21 @@ export default async function JoinPage({
         : query.error === "authentication_failed"
           ? "Google sign-in could not be completed. Please try again."
         : query.error === "accept_failed"
-          ? "The invitation could not be accepted. Choose the Google account matching the invited email."
+          ? "The invitation could not be accepted. Make sure this account is not already connected to another workspace."
           : query.error === "invalid_invitation"
             ? "This invitation is invalid or has expired."
-            : null;
+            : query.error === "invalid_email"
+              ? "Enter a valid email address."
+              : query.error === "weak_password"
+                ? "Password must be at least 8 characters."
+                : query.error === "email_auth_failed"
+                  ? "We could not continue with that email and password. If you already have an account, check the password and try again."
+                  : null;
+
+  const successMessage =
+    query.message === "check_email"
+      ? "Check your email to confirm your account, then return to this invitation link."
+      : null;
 
   const expiresAt = new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
@@ -90,6 +104,9 @@ export default async function JoinPage({
         {errorMessage && (
           <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
+        {successMessage && (
+          <Alert tone="success" className="mt-6">{successMessage}</Alert>
+        )}
 
         {user ? (
           <div className="mt-8">
@@ -102,10 +119,41 @@ export default async function JoinPage({
         ) : (
           <div className="mt-8">
             <p className="text-sm leading-6 text-gray-600">
-              Use the Google account whose email matches this invitation.
+              Use the account you want for CoachOS. It does not need to match the email your coach typed while creating the invite.
             </p>
             <form action={signInForInvitation} className="mt-4">
               <Button type="submit" variant="secondary" className="w-full"><GoogleIcon />Continue with Google</Button>
+            </form>
+
+            <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[.18em] text-gray-400">
+              <span className="h-px flex-1 bg-gray-200" />
+              or
+              <span className="h-px flex-1 bg-gray-200" />
+            </div>
+
+            <form action={continueWithEmail} className="space-y-4">
+              <Field label="Email" htmlFor="email" required>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  required
+                />
+              </Field>
+              <Field label="Password" htmlFor="password" hint="Use an existing password to sign in, or create one if this is your first time." required>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="At least 8 characters"
+                  minLength={8}
+                  required
+                />
+              </Field>
+              <Button type="submit" className="w-full">Continue with email</Button>
             </form>
           </div>
         )}

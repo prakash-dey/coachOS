@@ -13,7 +13,6 @@ export async function createNewClient(formData: FormData) {
 
   const firstName = getTextValue("firstName");
   const lastName = getTextValue("lastName");
-  const email = getTextValue("email").toLowerCase();
   const phone = getTextValue("phone");
 
   const nameIsInvalid =
@@ -22,14 +21,10 @@ export async function createNewClient(formData: FormData) {
     lastName.length < 1 ||
     lastName.length > 100;
 
-  const emailIsInvalid =
-    email.length > 0 &&
-    (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-
   const phoneIsInvalid =
     phone.length > 0 && (phone.length < 3 || phone.length > 32);
 
-  if (nameIsInvalid || emailIsInvalid || phoneIsInvalid) {
+  if (nameIsInvalid || phoneIsInvalid) {
     redirect("/clients/new?error=invalid_input");
   }
 
@@ -58,18 +53,22 @@ export async function createNewClient(formData: FormData) {
     redirect("/onboarding");
   }
 
-  const { error: insertError } = await supabase.from("clients").insert({
-    workspace_id: workspace.id,
-    first_name: firstName,
-    last_name: lastName,
-    email: email || null,
-    phone: phone || null,
-  });
+  const { data: client, error: insertError } = await supabase
+    .from("clients")
+    .insert({
+      workspace_id: workspace.id,
+      first_name: firstName,
+      last_name: lastName,
+      email: null,
+      phone: phone || null,
+    })
+    .select("id")
+    .single();
 
-  if (insertError) {
+  if (insertError || !client) {
     redirect("/clients/new?error=create_failed");
   }
 
   revalidatePath("/clients");
-  redirect("/clients");
+  redirect(`/clients/${client.id}#invitation`);
 }

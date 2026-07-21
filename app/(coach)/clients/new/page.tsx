@@ -62,7 +62,7 @@ export default async function NewClientPage({
         <h1 className="mt-4 text-3xl font-semibold">Add a client</h1>
 
         <p className="mt-2 text-gray-600">
-          Add someone to your private coaching workspace.
+          Add someone to your private coaching workspace, then generate a join link they can open with their preferred email.
         </p>
 
         {errorMessage && (
@@ -94,16 +94,6 @@ export default async function NewClientPage({
             </Field>
           </div>
 
-          <Field label="Email address" htmlFor="email" hint="Optional for now, but required before sending an invitation.">
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              maxLength={254}
-            />
-          </Field>
-
           <Field label="Phone number" htmlFor="phone">
             <Input
               id="phone"
@@ -115,7 +105,7 @@ export default async function NewClientPage({
           </Field>
 
           <div className="flex items-center gap-3">
-            <Button type="submit">Add client</Button>
+            <Button type="submit">Add client and generate invite</Button>
             <ButtonLink href="/clients" variant="ghost">Cancel</ButtonLink>
           </div>
         </form>

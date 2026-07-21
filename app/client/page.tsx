@@ -1,2 +1,96 @@
-import Link from "next/link"; import { redirect } from "next/navigation"; import { createClient } from "@/lib/supabase/server";
-export default async function ClientPortalPage() { const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser(); if (!user) redirect("/login"); const { data: client } = await supabase.from("clients").select("id, workspace_id, first_name, workout_plan_assignments(id, status, workout_plans(name)), nutrition_plan_assignments(id, status, nutrition_plans(name, daily_calories))").eq("user_id", user.id).maybeSingle(); if (!client) redirect("/auth/continue"); const { data: latest } = await supabase.from("check_ins").select("week_start, energy_score, mood_score, weight_kg, coach_feedback").eq("client_id", client.id).order("week_start", { ascending: false }).limit(1).maybeSingle(); const workout = client.workout_plan_assignments.find(a => a.status === "active"); const nutrition = client.nutrition_plan_assignments.find(a => a.status === "active"); const workoutPlan = workout?.workout_plans as unknown as { name: string } | null; const nutritionPlan = nutrition?.nutrition_plans as unknown as { name: string; daily_calories: number | null } | null; return <main className="px-4 py-7 sm:px-6 lg:py-10"><div className="mx-auto max-w-6xl"><header><p className="text-xs font-bold uppercase tracking-[.2em] text-brand">Your coaching space</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Hey {client.first_name}, ready for today?</h1><p className="mt-2 text-muted">Small actions, repeated. That’s where progress lives.</p></header><section className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_.85fr]"><Link href="/client/workout" className="relative min-h-72 overflow-hidden rounded-[2rem] bg-brand-strong p-7 text-white"><div aria-hidden="true" className="absolute -bottom-20 -right-10 h-64 w-64 rounded-full border-[36px] border-white/5"/><p className="text-xs font-bold uppercase tracking-[.18em] text-accent">Training</p><h2 className="mt-4 max-w-md text-3xl font-semibold">{workoutPlan?.name ?? "Your next workout will appear here"}</h2><p className="mt-3 text-sm text-white/65">{workout ? "Your active plan is ready. Open it and move through each day at your pace." : "Your coach hasn’t assigned a workout plan yet."}</p><span className="absolute bottom-7 left-7 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-brand-strong">Open workout →</span></Link><div className="grid gap-4"><Link href="/client/nutrition" className="rounded-[2rem] bg-[#fff0e7] p-6"><p className="text-xs font-bold uppercase tracking-wider text-[#9a4a21]">Nutrition</p><h2 className="mt-3 text-xl font-semibold">{nutritionPlan?.name ?? "No plan assigned"}</h2><p className="mt-2 text-sm text-muted">{nutritionPlan?.daily_calories ? `${nutritionPlan.daily_calories} kcal daily direction` : "Flexible food guidance from your coach."}</p></Link><Link href="/client/check-ins" className="rounded-[2rem] bg-[#e7ebff] p-6"><p className="text-xs font-bold uppercase tracking-wider text-[#5145a5]">Latest signal</p><div className="mt-3 flex items-end justify-between"><div><p className="text-3xl font-semibold">{latest?.energy_score ?? "—"}<span className="text-sm">/5 energy</span></p><p className="mt-1 text-sm text-muted">{latest ? `Week of ${latest.week_start}` : "Submit your first check-in"}</p></div><span className="text-xl">↗</span></div></Link></div></section><section className="mt-4 rounded-[2rem] border border-border bg-surface p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-muted">Weekly reflection</p><h2 className="mt-1 text-xl font-semibold">How did the week really feel?</h2><p className="mt-1 text-sm text-muted">Give your coach the context behind the numbers.</p></div><Link href="/client/check-ins/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white">Submit check-in</Link></div></section></div></main>; }
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/server";
+
+export default async function ClientPortalPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id, workspace_id, first_name, workout_plan_assignments(id, status, workout_plans(name)), nutrition_plan_assignments(id, status, nutrition_plans(name, daily_calories))")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!client) redirect("/auth/continue");
+
+  const { data: intake } = await supabase
+    .from("client_intake_forms")
+    .select("id")
+    .eq("workspace_id", client.workspace_id)
+    .eq("client_id", client.id)
+    .maybeSingle();
+
+  if (!intake) redirect("/client/onboarding");
+
+  const { data: latest } = await supabase
+    .from("check_ins")
+    .select("week_start, energy_score, mood_score, weight_kg, coach_feedback")
+    .eq("client_id", client.id)
+    .order("week_start", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const workout = client.workout_plan_assignments.find((assignment) => assignment.status === "active");
+  const nutrition = client.nutrition_plan_assignments.find((assignment) => assignment.status === "active");
+  const workoutPlan = workout?.workout_plans as unknown as { name: string } | null;
+  const nutritionPlan = nutrition?.nutrition_plans as unknown as { name: string; daily_calories: number | null } | null;
+
+  return (
+    <main className="px-4 py-7 sm:px-6 lg:py-10">
+      <div className="mx-auto max-w-6xl">
+        <header>
+          <p className="text-xs font-bold uppercase tracking-[.2em] text-brand">Your coaching space</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Hey {client.first_name}, ready for today?</h1>
+          <p className="mt-2 text-muted">Small actions, repeated. That’s where progress lives.</p>
+        </header>
+
+        <section className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
+          <Link href="/client/workout" className="relative min-h-72 overflow-hidden rounded-[2rem] bg-brand-strong p-7 text-white">
+            <div aria-hidden="true" className="absolute -bottom-20 -right-10 h-64 w-64 rounded-full border-[36px] border-white/5" />
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-accent">Training</p>
+            <h2 className="mt-4 max-w-md text-3xl font-semibold">{workoutPlan?.name ?? "Your next workout will appear here"}</h2>
+            <p className="mt-3 text-sm text-white/65">{workout ? "Your active plan is ready. Open it and move through each day at your pace." : "Your coach hasn’t assigned a workout plan yet."}</p>
+            <span className="absolute bottom-7 left-7 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-brand-strong">Open workout →</span>
+          </Link>
+
+          <div className="grid gap-4">
+            <Link href="/client/nutrition" className="rounded-[2rem] bg-[#fff0e7] p-6">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#9a4a21]">Nutrition</p>
+              <h2 className="mt-3 text-xl font-semibold">{nutritionPlan?.name ?? "No plan assigned"}</h2>
+              <p className="mt-2 text-sm text-muted">{nutritionPlan?.daily_calories ? `${nutritionPlan.daily_calories} kcal daily direction` : "Flexible food guidance from your coach."}</p>
+            </Link>
+
+            <Link href="/client/check-ins" className="rounded-[2rem] bg-[#e7ebff] p-6">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#5145a5]">Latest signal</p>
+              <div className="mt-3 flex items-end justify-between">
+                <div>
+                  <p className="text-3xl font-semibold">{latest?.energy_score ?? "—"}<span className="text-sm">/5 energy</span></p>
+                  <p className="mt-1 text-sm text-muted">{latest ? `Week of ${latest.week_start}` : "Submit your first check-in"}</p>
+                </div>
+                <span className="text-xl">↗</span>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        <section className="mt-4 rounded-[2rem] border border-border bg-surface p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">Weekly reflection</p>
+              <h2 className="mt-1 text-xl font-semibold">How did the week really feel?</h2>
+              <p className="mt-1 text-sm text-muted">Give your coach the context behind the numbers.</p>
+            </div>
+            <Link href="/client/check-ins/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white">Submit check-in</Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
