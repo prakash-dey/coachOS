@@ -4,6 +4,7 @@ import { type ReactNode } from "react";
 import imageCompression from "browser-image-compression";
 
 import { Input, Select, Textarea } from "@/app/components/ui/FormControls";
+import { ui } from "@/app/components/ui/design-system";
 
 export const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -168,7 +169,7 @@ export function FormSection({
 }>) {
   return (
     <section
-      className={`grid gap-5 rounded-[2rem] border border-border bg-surface p-5 shadow-sm sm:p-6 ${
+      className={`grid gap-5 ${ui.radius.card} ${ui.surface.card} p-5 sm:p-6 ${
         columns === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
       }`}
     >

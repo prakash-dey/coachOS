@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Alert } from "@/app/components/ui/Feedback";
 import CheckInForm from "./CheckInForm";
 
 type NewCheckInPageProps = {
@@ -53,22 +54,21 @@ export default async function NewCheckInPage({
               : null;
 
   return (
-    <main className="min-h-screen px-6 py-10">
+    <main className="min-h-screen px-4 py-7 sm:px-6 lg:py-10">
       <section className="mx-auto max-w-5xl">
-        <Link href="/client/check-ins" className="text-sm text-gray-600">
+        <Link href="/client/check-ins" className="text-sm font-semibold text-muted transition hover:text-brand">
           ← Check-ins
         </Link>
 
-        <h1 className="mt-4 text-3xl font-semibold">Weekly check-in</h1>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[.18em] text-warm">Weekly report</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">Weekly check-in</h1>
 
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-muted">
           Share how your week is going with your coach.
         </p>
 
         {errorMessage && (
-          <p className="mt-6 rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </p>
+          <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
 
         <CheckInForm />

@@ -17,12 +17,12 @@ type PlanCardProps = {
 
 function PlanCardMetric({ value, label }: PlanCardMetric) {
   return (
-    <div className="flex h-11 min-w-0 items-center justify-center overflow-hidden text-center">
+    <div className="flex h-12 min-w-0 items-center justify-center overflow-hidden text-center">
       <span className="min-w-0 overflow-hidden leading-none">
-        <b className="block whitespace-nowrap text-[13px] leading-none tracking-tight">
+        <b className="block whitespace-nowrap text-lg leading-none tracking-tight">
           {value}
         </b>
-        <small className="mt-1 block whitespace-nowrap text-[7px] font-bold uppercase tracking-normal text-muted">
+        <small className="mt-1 block max-w-20 truncate whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
           {label}
         </small>
       </span>
@@ -45,29 +45,29 @@ export function PlanCard({
   return (
     <Link
       href={href}
-      className={`group flex h-[19.5rem] flex-col overflow-hidden rounded-[2rem] border border-black/5 px-6 py-6 transition hover:-translate-y-1 hover:shadow-xl ${backgroundClassName}`}
+      className={`group flex h-[21rem] min-w-[19rem] flex-col overflow-hidden rounded-2xl border border-black/5 px-7 py-7 shadow-card transition hover:-translate-y-1 hover:shadow-lift ${backgroundClassName}`}
     >
       <div className="flex h-12 shrink-0 items-start justify-between overflow-hidden">
         <span
-          className={`inline-flex min-h-10 min-w-24 items-center justify-center rounded-full px-4 text-center text-xs font-bold capitalize shadow-sm ${statusClassName}`}
+          className={`inline-flex min-h-10 min-w-28 items-center justify-center rounded-full px-4 text-center text-xs font-bold capitalize shadow-sm ${statusClassName}`}
         >
           {status}
         </span>
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-white/70 transition group-hover:translate-x-1">
+        <span className="grid h-12 w-12 place-items-center rounded-full bg-white/75 text-xl transition group-hover:translate-x-1">
           →
         </span>
       </div>
 
-      <div className="mt-6 h-24 overflow-hidden">
-        <h2 className="line-clamp-2 text-2xl font-semibold leading-tight">
+      <div className="mt-8 h-28 overflow-hidden">
+        <h2 className="line-clamp-2 text-2xl font-bold leading-tight tracking-[-0.03em]">
           {title}
         </h2>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
+        <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted">
           {description || fallbackDescription}
         </p>
       </div>
 
-      <div className={`-mx-1 mt-auto grid h-[4.5rem] shrink-0 ${metricGridClass} gap-1.5 overflow-hidden border-t border-black/5 px-1 pt-4`}>
+      <div className={`mt-auto grid h-[5rem] shrink-0 ${metricGridClass} gap-2 overflow-hidden border-t border-black/5 pt-4`}>
         {metrics.map((metric) => (
           <PlanCardMetric key={metric.label} {...metric} />
         ))}

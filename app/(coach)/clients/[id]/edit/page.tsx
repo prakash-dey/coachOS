@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Alert } from "@/app/components/ui/Feedback";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { Field, Input, Select } from "@/app/components/ui/FormControls";
+import { Card } from "@/app/components/ui/Layout";
 
 import { updateClient } from "./actions";
 
@@ -86,20 +87,22 @@ export default async function EditClientPage({
         : null;
 
   return (
-    <main className="min-h-screen px-6 py-10">
-      <section className="mx-auto max-w-xl">
+    <main className="min-h-screen px-4 py-7 sm:px-6 lg:px-10 lg:py-10">
+      <section className="mx-auto max-w-2xl">
         <Link
           href={`/clients/${client.id}`}
-          className="text-sm text-gray-600"
+          className="text-sm font-semibold text-muted transition hover:text-brand"
         >
           ← Client details
         </Link>
 
-        <h1 className="mt-4 text-3xl font-semibold">Edit client</h1>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[.18em] text-warm">Client profile</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">Edit client</h1>
 
         {errorMessage && <Alert className="mt-6">{errorMessage}</Alert>}
 
-        <form action={updateClientWithId} className="mt-8 space-y-5">
+        <Card className="mt-8 p-6 sm:p-8">
+        <form action={updateClientWithId} className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="First name" htmlFor="firstName">
               <Input
@@ -172,6 +175,7 @@ export default async function EditClientPage({
             <ButtonLink href={`/clients/${client.id}`} variant="ghost">Cancel</ButtonLink>
           </div>
         </form>
+        </Card>
       </section>
     </main>
   );
