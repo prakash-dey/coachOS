@@ -7,7 +7,7 @@ import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { Badge, Card } from "@/app/components/ui/Layout";
 import ClientLifecycleActions from "./ClientLifecycleActions";
 import IntakePhotoGallery from "./IntakePhotoGallery";
-import { demoIntakePhotos } from "@/lib/demo-assets";
+import { demoIntakePhotos, publicDemoPhotoUrl } from "@/lib/demo-assets";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -109,8 +109,14 @@ export default async function ClientDetailPage({
       ]
     : [];
 
-  const photoUrls = workspace.is_demo
-    ? demoIntakePhotos
+  const photoUrls = workspace.is_demo && photoPaths.length > 0
+    ? photoPaths.map((photo) => ({
+        ...photo,
+        url: publicDemoPhotoUrl(photo.path),
+        error: null,
+      }))
+    : workspace.is_demo
+      ? demoIntakePhotos
     : await Promise.all(
         photoPaths.map(async (photo) => {
           const { data, error } = await supabase.storage

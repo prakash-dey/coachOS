@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
-import { demoCheckInPhotos } from "@/lib/demo-assets";
+import { demoCheckInPhotos, publicDemoPhotoUrl } from "@/lib/demo-assets";
 import { createClient } from "@/lib/supabase/server";
 import { saveFeedback } from "./actions";
 const PHOTO_BUCKET = "check-in-photos";
@@ -70,8 +70,19 @@ function normalizeCheckIn(checkIn: Partial<CheckInRecord>): CheckInRecord {
 async function createSignedPhotoUrls(
   supabase: Awaited<ReturnType<typeof createClient>>,
   paths: Array<string | null>,
+  options?: { isDemo?: boolean },
 ) {
   const uniquePaths = Array.from(new Set(paths.filter(Boolean) as string[]));
+
+  if (options?.isDemo) {
+    return uniquePaths
+      .map((path) => {
+        const url = publicDemoPhotoUrl(path);
+
+        return url ? { path, url } : null;
+      })
+      .filter(Boolean) as Array<{ path: string; url: string }>;
+  }
 
   const urls = await Promise.all(
     uniquePaths.map(async (path) => {
@@ -141,7 +152,7 @@ export default async function ReviewCheckInPage({
     normalizedCheckIn.front_photo_path ?? normalizedCheckIn.progress_photo_path,
     normalizedCheckIn.side_photo_path,
     normalizedCheckIn.back_photo_path,
-  ]);
+  ], { isDemo: workspace.is_demo });
   const photoUrls =
     signedPhotoUrls.length > 0
       ? signedPhotoUrls

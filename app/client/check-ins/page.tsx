@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { ButtonLink } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
 import { Card } from "@/app/components/ui/Layout";
+import { publicDemoPhotoUrl } from "@/lib/demo-assets";
 import { createClient } from "@/lib/supabase/server";
 
 const PHOTO_BUCKET = "check-in-photos";
@@ -73,8 +74,19 @@ function normalizeCheckIn(checkIn: Partial<CheckInRecord>): CheckInRecord {
 async function createSignedPhotoUrls(
   supabase: Awaited<ReturnType<typeof createClient>>,
   paths: Array<string | null>,
+  options?: { isDemo?: boolean },
 ) {
   const uniquePaths = Array.from(new Set(paths.filter(Boolean) as string[]));
+
+  if (options?.isDemo) {
+    return uniquePaths
+      .map((path) => {
+        const url = publicDemoPhotoUrl(path);
+
+        return url ? { path, url } : null;
+      })
+      .filter(Boolean) as Array<{ path: string; url: string }>;
+  }
 
   const urls = await Promise.all(
     uniquePaths.map(async (path) => {
@@ -118,7 +130,7 @@ export default async function CheckInsPage({
 
   const { data: membership, error: membershipError } = await supabase
     .from("workspace_members")
-    .select("workspace_id, role, status")
+    .select("workspace_id, role, status, workspaces(is_demo)")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -172,6 +184,7 @@ export default async function CheckInsPage({
   const normalizedCheckIns = (checkIns ?? []).map((checkIn) =>
     normalizeCheckIn(checkIn),
   );
+  const workspace = membership.workspaces as unknown as { is_demo: boolean } | null;
 
   const checkInsWithPhotos = await Promise.all(
     normalizedCheckIns.map(async (checkIn) => {
@@ -179,7 +192,7 @@ export default async function CheckInsPage({
         checkIn.front_photo_path ?? checkIn.progress_photo_path,
         checkIn.side_photo_path,
         checkIn.back_photo_path,
-      ]);
+      ], { isDemo: workspace?.is_demo ?? false });
 
       return {
         ...checkIn,
