@@ -10,22 +10,22 @@ export const demoIntakePhotos: DemoPhoto[] = [
   {
     label: "Front",
     description: "Front baseline",
-    path: "/demo/client-front.svg",
-    url: "/demo/client-front.svg",
+    path: "images/male_front_view.png",
+    url: "/images/male_front_view.png",
     error: null,
   },
   {
     label: "Side",
     description: "Side posture",
-    path: "/demo/client-side.svg",
-    url: "/demo/client-side.svg",
+    path: "images/male_side_view.png",
+    url: "/images/male_side_view.png",
     error: null,
   },
   {
     label: "Back",
     description: "Back baseline",
-    path: "/demo/client-back.svg",
-    url: "/demo/client-back.svg",
+    path: "images/male_back_view.png",
+    url: "/images/male_back_view.png",
     error: null,
   },
 ];
@@ -33,17 +33,26 @@ export const demoIntakePhotos: DemoPhoto[] = [
 export const demoCheckInPhotos = [
   {
     label: "Front",
-    path: "/demo/checkin-front.svg",
-    url: "/demo/checkin-front.svg",
+    path: "images/female_front_view.png",
+    url: "/images/female_front_view.png",
   },
   {
     label: "Side",
-    path: "/demo/checkin-side.svg",
-    url: "/demo/checkin-side.svg",
+    path: "images/female_side_view.png",
+    url: "/images/female_side_view.png",
   },
   {
     label: "Back",
-    path: "/demo/checkin-back.svg",
-    url: "/demo/checkin-back.svg",
+    path: "images/female_back_view.png",
+    url: "/images/female_back_view.png",
   },
 ];
+
+export function publicDemoPhotoUrl(path: string | null | undefined) {
+  if (!path) return null;
+
+  if (path.startsWith("/")) return path;
+  if (path.startsWith("images/")) return `/${path}`;
+
+  return null;
+}
