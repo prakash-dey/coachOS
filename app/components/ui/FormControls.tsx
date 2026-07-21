@@ -16,10 +16,13 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return <textarea className={cn(control, className)} {...props} />;
 }
 
-export function Field({ label, htmlFor, hint, children }: Readonly<{ label: string; htmlFor: string; hint?: string; children: React.ReactNode }>) {
+export function Field({ label, htmlFor, hint, required = false, children }: Readonly<{ label: string; htmlFor: string; hint?: string; required?: boolean; children: React.ReactNode }>) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="text-sm font-semibold text-foreground">{label}</label>
+      <label htmlFor={htmlFor} className="text-sm font-semibold text-foreground">
+        {label}
+        {required && <span className="text-red-600"> *</span>}
+      </label>
       {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
       {children}
     </div>

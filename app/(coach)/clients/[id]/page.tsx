@@ -12,6 +12,15 @@ type ClientDetailPageProps = {
   }>;
 };
 
+function tableIsMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  return error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    error.message?.toLowerCase().includes("client_intake_forms") ||
+    error.message?.toLowerCase().includes("could not find the table");
+}
+
 export default async function ClientDetailPage({
   params,
 }: ClientDetailPageProps) {
@@ -65,6 +74,40 @@ export default async function ClientDetailPage({
   if (!client) {
     notFound();
   }
+
+  const { data: intake, error: intakeError } = await supabase
+    .from("client_intake_forms")
+    .select("*")
+    .eq("workspace_id", workspace.id)
+    .eq("client_id", client.id)
+    .maybeSingle();
+
+  if (intakeError && !tableIsMissing(intakeError)) {
+    throw new Error("Unable to load the client intake.");
+  }
+
+  const intakeUnavailable = tableIsMissing(intakeError);
+
+  const photoPaths = intake
+    ? [
+        { label: "Front", path: intake.front_photo_path },
+        { label: "Side", path: intake.side_photo_path },
+        { label: "Back", path: intake.back_photo_path },
+      ]
+    : [];
+
+  const photoUrls = await Promise.all(
+    photoPaths.map(async (photo) => {
+      const { data } = await supabase.storage
+        .from("client-onboarding-photos")
+        .createSignedUrl(photo.path, 60 * 10);
+
+      return {
+        ...photo,
+        url: data?.signedUrl ?? null,
+      };
+    }),
+  );
 
   const createdDate = new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
@@ -146,6 +189,93 @@ export default async function ClientDetailPage({
             </div>
           </dl>
         </div>
+
+        <section className="mt-8 rounded-[2rem] border border-border bg-surface p-6 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Client intake</p>
+              <h2 className="mt-1 text-2xl font-semibold">Baseline details</h2>
+            </div>
+            {intake?.submitted_at && (
+              <span className="text-sm text-muted">
+                Submitted {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(intake.submitted_at))}
+              </span>
+            )}
+          </div>
+
+          {intakeUnavailable ? (
+            <div className="mt-5 rounded-2xl border border-dashed border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+              Client intake will appear here after the onboarding database migration is applied.
+            </div>
+          ) : intake ? (
+            <div className="mt-6 space-y-6">
+              <div className="grid gap-4 sm:grid-cols-3">
+                {photoUrls.map((photo) => (
+                  <figure key={photo.label} className="overflow-hidden rounded-2xl border border-border bg-background">
+                    {photo.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photo.url} alt={`${photo.label} baseline for ${client.first_name} ${client.last_name}`} className="h-64 w-full object-cover" />
+                    ) : (
+                      <div className="flex h-64 items-center justify-center text-sm text-muted">Photo unavailable</div>
+                    )}
+                    <figcaption className="px-4 py-3 text-sm font-semibold">{photo.label} view</figcaption>
+                  </figure>
+                ))}
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <article className="rounded-2xl border border-border bg-background p-5">
+                  <h3 className="font-semibold">Training context</h3>
+                  <dl className="mt-4 space-y-3 text-sm">
+                    <div><dt className="text-muted">Primary goal</dt><dd className="mt-1 font-medium">{intake.primary_goal}</dd></div>
+                    <div><dt className="text-muted">Experience</dt><dd className="mt-1 font-medium capitalize">{String(intake.training_experience).replace("_", " ")}</dd></div>
+                    <div><dt className="text-muted">Activity level</dt><dd className="mt-1 font-medium capitalize">{String(intake.activity_level).replace("_", " ")}</dd></div>
+                    <div><dt className="text-muted">Training availability</dt><dd className="mt-1 font-medium">{intake.training_days_per_week} days/week</dd></div>
+                  </dl>
+                </article>
+
+                <article className="rounded-2xl border border-border bg-background p-5">
+                  <h3 className="font-semibold">Measurements</h3>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div><dt className="text-muted">Height</dt><dd className="mt-1 font-medium">{intake.height_cm} cm</dd></div>
+                    <div><dt className="text-muted">Weight</dt><dd className="mt-1 font-medium">{intake.weight_kg} kg</dd></div>
+                    <div><dt className="text-muted">Waist</dt><dd className="mt-1 font-medium">{intake.waist_cm} cm</dd></div>
+                    <div><dt className="text-muted">Chest</dt><dd className="mt-1 font-medium">{intake.chest_cm ? `${intake.chest_cm} cm` : "—"}</dd></div>
+                    <div><dt className="text-muted">Hip</dt><dd className="mt-1 font-medium">{intake.hip_cm ? `${intake.hip_cm} cm` : "—"}</dd></div>
+                    <div><dt className="text-muted">Thigh</dt><dd className="mt-1 font-medium">{intake.thigh_cm ? `${intake.thigh_cm} cm` : "—"}</dd></div>
+                    <div><dt className="text-muted">Arm</dt><dd className="mt-1 font-medium">{intake.arm_cm ? `${intake.arm_cm} cm` : "—"}</dd></div>
+                  </dl>
+                </article>
+
+                <article className="rounded-2xl border border-border bg-background p-5">
+                  <h3 className="font-semibold">Nutrition and lifestyle</h3>
+                  <dl className="mt-4 space-y-3 text-sm">
+                    <div><dt className="text-muted">Food habits</dt><dd className="mt-1 font-medium">{intake.usual_food_habits}</dd></div>
+                    <div><dt className="text-muted">Dietary preference</dt><dd className="mt-1 font-medium">{intake.dietary_preference}</dd></div>
+                    <div><dt className="text-muted">Allergies</dt><dd className="mt-1 font-medium">{intake.allergies}</dd></div>
+                    <div><dt className="text-muted">Sleep</dt><dd className="mt-1 font-medium">{intake.sleep_hours ? `${intake.sleep_hours} hours` : "—"}</dd></div>
+                    <div><dt className="text-muted">Stress</dt><dd className="mt-1 font-medium">{intake.stress_level ? `${intake.stress_level}/5` : "—"}</dd></div>
+                  </dl>
+                </article>
+
+                <article className="rounded-2xl border border-border bg-background p-5">
+                  <h3 className="font-semibold">Health and safety</h3>
+                  <dl className="mt-4 space-y-3 text-sm">
+                    <div><dt className="text-muted">Medical history</dt><dd className="mt-1 font-medium">{intake.medical_history}</dd></div>
+                    <div><dt className="text-muted">Injuries / limitations</dt><dd className="mt-1 font-medium">{intake.injuries_or_limitations}</dd></div>
+                    <div><dt className="text-muted">Medications</dt><dd className="mt-1 font-medium">{intake.medications ?? "—"}</dd></div>
+                    <div><dt className="text-muted">Emergency contact</dt><dd className="mt-1 font-medium">{intake.emergency_contact_name} · {intake.emergency_contact_phone}</dd></div>
+                    <div><dt className="text-muted">Extra notes</dt><dd className="mt-1 font-medium">{intake.notes ?? "—"}</dd></div>
+                  </dl>
+                </article>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-5 rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted">
+              This client has not submitted their onboarding intake yet.
+            </div>
+          )}
+        </section>
         <section className="mt-8">
           <div className="flex items-end justify-between gap-4">
             <div>
@@ -164,7 +294,7 @@ export default async function ClientDetailPage({
           ) : <div className="mt-4 rounded-[1.5rem] border border-dashed border-border bg-surface p-6 text-sm text-muted">No workout or nutrition plans have been assigned yet.</div>}
         </section>
         <ClientLifecycleActions clientId={client.id} status={client.status} />
-        {!workspace.is_demo && <InviteClient clientId={client.id} canInvite={client.status === "active" && Boolean(client.email)} />}
+        {!workspace.is_demo && <InviteClient clientId={client.id} canInvite={client.status === "active"} />}
       </section>
     </main>
   );
