@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { Button } from "@/app/components/ui/Button";
+import { Surface } from "@/app/components/ui/Layout";
 import {
   ALLOWED_IMAGE_TYPES,
   FormSection,
@@ -85,7 +86,7 @@ export default function ClientOnboardingForm() {
 
   return (
     <form action={handleSubmit} className="mt-8 space-y-8">
-      <section className="rounded-[2rem] border border-border bg-surface p-5 shadow-sm sm:p-6">
+      <Surface>
         <h2 className="text-xl font-semibold">Baseline photos</h2>
         <p className="mt-2 text-sm text-muted">
           Required. These help your coach understand posture and starting point.
@@ -105,7 +106,7 @@ export default function ClientOnboardingForm() {
             {photoError}
           </p>
         )}
-      </section>
+      </Surface>
 
       <FormSection
         title="Training snapshot"

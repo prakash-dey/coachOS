@@ -46,16 +46,16 @@ export default async function ClientPortalPage() {
     <main className="px-4 py-7 sm:px-6 lg:py-10">
       <div className="mx-auto max-w-6xl">
         <header>
-          <p className="text-xs font-bold uppercase tracking-[.2em] text-brand">Your coaching space</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Hey {client.first_name}, ready for today?</h1>
+          <p className="text-xs font-bold uppercase tracking-[.2em] text-warm">Your coaching space</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">Hey {client.first_name}, ready for today?</h1>
           <p className="mt-2 text-muted">Small actions, repeated. That’s where progress lives.</p>
         </header>
 
         <section className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
-          <Link href="/client/workout" className="relative min-h-72 overflow-hidden rounded-[2rem] bg-brand-strong p-7 text-white">
+          <Link href="/client/workout" className="relative min-h-72 overflow-hidden rounded-2xl bg-brand-strong p-7 text-white shadow-card transition hover:-translate-y-1 hover:shadow-lift">
             <div aria-hidden="true" className="absolute -bottom-20 -right-10 h-64 w-64 rounded-full border-[36px] border-white/5" />
             <p className="text-xs font-bold uppercase tracking-[.18em] text-accent">Training</p>
-            <h2 className="mt-4 max-w-md text-3xl font-semibold">{workoutPlan?.name ?? "Your next workout will appear here"}</h2>
+            <h2 className="mt-4 max-w-md text-3xl font-bold tracking-[-0.04em]">{workoutPlan?.name ?? "Your next workout will appear here"}</h2>
             <p className="mt-3 text-sm text-white/65">{workout ? "Your active plan is ready. Open it and move through each day at your pace." : "Your coach hasn’t assigned a workout plan yet."}</p>
             <span className="absolute bottom-7 left-7 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-brand-strong">Open workout →</span>
           </Link>
@@ -87,7 +87,7 @@ export default async function ClientPortalPage() {
               <h2 className="mt-1 text-xl font-semibold">How did the week really feel?</h2>
               <p className="mt-1 text-sm text-muted">Give your coach the context behind the numbers.</p>
             </div>
-            <Link href="/client/check-ins/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white">Submit check-in</Link>
+            <Link href="/client/check-ins/new" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-bold text-white shadow-md shadow-brand/15 transition hover:bg-brand-strong">Submit check-in</Link>
           </div>
         </section>
       </div>

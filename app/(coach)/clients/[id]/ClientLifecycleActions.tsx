@@ -7,8 +7,8 @@ type ClientStatus = "active" | "paused" | "archived";
 
 export default function ClientLifecycleActions({ clientId, status }: { clientId: string; status: ClientStatus }) {
   return (
-    <section className="mt-8 rounded-[2rem] border border-border bg-surface p-6">
-      <h2 className="text-lg font-semibold">Client access</h2>
+    <section className="mt-8 rounded-2xl border border-red-100 bg-surface p-6 shadow-card">
+      <h2 className="text-lg font-bold text-red-700">Danger zone</h2>
       <p className="mt-1 text-sm text-muted">Pausing or archiving immediately suspends portal access. You can reactivate the client later.</p>
       <div className="mt-5 flex flex-wrap gap-3">
         {status !== "active" && <form action={changeClientStatus.bind(null, clientId, "active")}><Button type="submit">Reactivate</Button></form>}

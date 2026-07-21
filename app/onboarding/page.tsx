@@ -5,6 +5,7 @@ import { Button } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
 import { Field, Input } from "@/app/components/ui/FormControls";
 import { BrandLink } from "@/app/components/ui/Brand";
+import { Card } from "@/app/components/ui/Layout";
 
 import { completeOnboarding } from "./actions";
 
@@ -51,14 +52,15 @@ export default async function OnboardingPage({
         : null;
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <section className="w-full max-w-md">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12">
+      <div aria-hidden="true" className="absolute -left-24 top-0 size-96 rounded-full bg-brand-soft/35 blur-3xl" />
+      <Card className="relative w-full max-w-md p-7 sm:p-9">
         <BrandLink />
-        <h1 className="mt-8 text-3xl font-semibold">
+        <h1 className="mt-8 text-3xl font-bold tracking-[-0.04em]">
           Set up your coaching workspace
         </h1>
 
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-muted">
           Tell us who you are and what your workspace should be called.
         </p>
 
@@ -93,7 +95,7 @@ export default async function OnboardingPage({
 
           <Button type="submit" className="w-full">Create workspace</Button>
         </form>
-      </section>
+      </Card>
     </main>
   );
 }

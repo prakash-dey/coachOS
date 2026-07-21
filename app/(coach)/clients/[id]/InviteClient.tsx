@@ -52,10 +52,10 @@ export default function InviteClient({
 
   if (!canInvite) {
     return (
-      <section className="mt-8 rounded-lg border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold">Client invitation</h2>
+      <section className="mt-8 rounded-2xl border border-border bg-surface p-6 shadow-card">
+        <h2 className="text-lg font-bold">Client invitation</h2>
 
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-muted">
           Set this client to active before generating an invitation.
         </p>
       </section>
@@ -63,10 +63,10 @@ export default function InviteClient({
   }
 
   return (
-    <section id="invitation" className="mt-8 rounded-lg border border-gray-200 p-5">
-      <h2 className="text-lg font-semibold">Client invitation</h2>
+    <section id="invitation" className="mt-8 rounded-2xl bg-surface-subtle p-6 shadow-card sm:p-8">
+      <h2 className="text-lg font-bold">Account & access</h2>
 
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-muted">
         Generate a single-use link that expires after 24 hours. The client can join with Google or email/password, and CoachOS will save the email they choose.
       </p>
 
@@ -89,8 +89,8 @@ export default function InviteClient({
         )}
 
         {state.status === "success" && state.invitationUrl && (
-          <div className="mt-5">
-            <p className="text-sm text-green-700">{state.message}</p>
+          <div className="mt-5 rounded-2xl bg-surface p-4">
+            <p className="text-sm font-semibold text-brand">{state.message}</p>
 
             <label
               htmlFor="invitationUrl"
@@ -99,13 +99,13 @@ export default function InviteClient({
               Invitation link
             </label>
 
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
               <Input
                 id="invitationUrl"
                 type="text"
                 readOnly
                 value={state.invitationUrl}
-                className="mt-0 min-w-0 flex-1"
+                className="mt-0 min-w-0 flex-1 font-mono text-xs"
               />
 
               <Button
@@ -125,7 +125,7 @@ export default function InviteClient({
             )}
 
             {state.expiresAt && (
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-muted">
                 Expires{" "}
                 {new Date(state.expiresAt).toLocaleString()}
               </p>

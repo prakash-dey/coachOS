@@ -3,9 +3,72 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ButtonLink } from "@/app/components/ui/Button";
+import { Alert } from "@/app/components/ui/Feedback";
+import { Card } from "@/app/components/ui/Layout";
 import { createClient } from "@/lib/supabase/server";
 
 const PHOTO_BUCKET = "check-in-photos";
+const expandedCheckInSelect =
+  "id, week_start, weight_kg, waist_cm, chest_cm, hip_cm, thigh_cm, arm_cm, energy_score, mood_score, notes, coach_feedback, submitted_at, progress_photo_path, front_photo_path, side_photo_path, back_photo_path";
+const legacyCheckInSelect =
+  "id, week_start, weight_kg, energy_score, mood_score, notes, coach_feedback, submitted_at, progress_photo_path";
+
+type CheckInRecord = {
+  id: string;
+  week_start: string;
+  weight_kg: number | null;
+  waist_cm: number | null;
+  chest_cm: number | null;
+  hip_cm: number | null;
+  thigh_cm: number | null;
+  arm_cm: number | null;
+  energy_score: number;
+  mood_score: number;
+  notes: string | null;
+  coach_feedback: string | null;
+  submitted_at: string;
+  progress_photo_path: string | null;
+  front_photo_path: string | null;
+  side_photo_path: string | null;
+  back_photo_path: string | null;
+};
+
+function isMissingExpandedCheckInSchema(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("waist_cm") ||
+    message.includes("front_photo_path") ||
+    message.includes("could not find")
+  );
+}
+
+function normalizeCheckIn(checkIn: Partial<CheckInRecord>): CheckInRecord {
+  return {
+    id: checkIn.id ?? "",
+    week_start: checkIn.week_start ?? "",
+    weight_kg: checkIn.weight_kg ?? null,
+    waist_cm: checkIn.waist_cm ?? null,
+    chest_cm: checkIn.chest_cm ?? null,
+    hip_cm: checkIn.hip_cm ?? null,
+    thigh_cm: checkIn.thigh_cm ?? null,
+    arm_cm: checkIn.arm_cm ?? null,
+    energy_score: checkIn.energy_score ?? 0,
+    mood_score: checkIn.mood_score ?? 0,
+    notes: checkIn.notes ?? null,
+    coach_feedback: checkIn.coach_feedback ?? null,
+    submitted_at: checkIn.submitted_at ?? "",
+    progress_photo_path: checkIn.progress_photo_path ?? null,
+    front_photo_path: checkIn.front_photo_path ?? null,
+    side_photo_path: checkIn.side_photo_path ?? null,
+    back_photo_path: checkIn.back_photo_path ?? null,
+  };
+}
 
 async function createSignedPhotoUrls(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -79,22 +142,39 @@ export default async function CheckInsPage({
     throw new Error("Unable to load your client profile.");
   }
 
-  const { data: checkIns, error: checkInsError } = await supabase
+  const expandedResult = await supabase
     .from("check_ins")
-    .select(
-      "id, week_start, weight_kg, waist_cm, chest_cm, hip_cm, thigh_cm, arm_cm, energy_score, mood_score, notes, coach_feedback, submitted_at, progress_photo_path, front_photo_path, side_photo_path, back_photo_path",
-    )
+    .select(expandedCheckInSelect)
     .eq("workspace_id", membership.workspace_id)
     .eq("client_id", client.id)
     .order("week_start", { ascending: false })
     .limit(20);
+  let checkIns = expandedResult.data as Array<Partial<CheckInRecord>> | null;
+  let checkInsError = expandedResult.error;
+
+  if (isMissingExpandedCheckInSchema(checkInsError)) {
+    const legacyResult = await supabase
+      .from("check_ins")
+      .select(legacyCheckInSelect)
+      .eq("workspace_id", membership.workspace_id)
+      .eq("client_id", client.id)
+      .order("week_start", { ascending: false })
+      .limit(20);
+
+    checkIns = legacyResult.data;
+    checkInsError = legacyResult.error;
+  }
 
   if (checkInsError) {
     throw new Error("Unable to load your check-ins.");
   }
 
+  const normalizedCheckIns = (checkIns ?? []).map((checkIn) =>
+    normalizeCheckIn(checkIn),
+  );
+
   const checkInsWithPhotos = await Promise.all(
-    checkIns.map(async (checkIn) => {
+    normalizedCheckIns.map(async (checkIn) => {
       const photoUrls = await createSignedPhotoUrls(supabase, [
         checkIn.front_photo_path ?? checkIn.progress_photo_path,
         checkIn.side_photo_path,
@@ -114,48 +194,44 @@ export default async function CheckInsPage({
       : null;
 
   return (
-    <main className="min-h-screen px-6 py-10">
-      <section className="mx-auto max-w-3xl">
-        <Link href="/client" className="text-sm text-gray-600">
+    <main className="min-h-screen px-4 py-7 sm:px-6 lg:py-10">
+      <section className="mx-auto max-w-5xl">
+        <Link href="/client" className="text-sm font-semibold text-muted transition hover:text-brand">
           ← Client portal
         </Link>
 
         <header className="mt-6 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold">
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-warm">
+              Progress rhythm
+            </p>
+            <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
               Weekly check-ins
             </h1>
 
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-muted">
               Track your weekly progress and coach feedback.
             </p>
           </div>
 
-          <Link
-            href="/client/check-ins/new"
-            className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-          >
-            New check-in
-          </Link>
+          <ButtonLink href="/client/check-ins/new">New check-in</ButtonLink>
         </header>
 
         {successMessage && (
-          <p className="mt-6 rounded-md bg-green-50 p-3 text-sm text-green-700">
-            {successMessage}
-          </p>
+          <Alert tone="success" className="mt-6">{successMessage}</Alert>
         )}
 
         {checkInsWithPhotos.length === 0 ? (
-          <div className="mt-10 rounded-lg border border-dashed border-gray-300 p-10 text-center">
-            <h2 className="text-lg font-medium">
+          <Card className="mt-10 border-dashed p-10 text-center">
+            <h2 className="text-lg font-bold">
               No check-ins yet
             </h2>
 
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-muted">
               Submit your first weekly check-in to begin tracking
               progress.
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="mt-8 space-y-4">
             {checkInsWithPhotos.map((checkIn) => {
@@ -169,7 +245,7 @@ export default async function CheckInsPage({
               return (
                 <article
                   key={checkIn.id}
-                  className="rounded-lg border border-gray-200 p-5"
+                  className="rounded-2xl border border-border bg-surface p-5 shadow-card"
                 >
                   {checkIn.photoUrls.length > 0 && (
                     <div className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -188,9 +264,9 @@ export default async function CheckInsPage({
                             <img
                               src={photo.url}
                               alt={`${label} progress for the week of ${weekLabel}`}
-                              className="aspect-[4/5] w-full rounded-md object-cover"
+                              className="aspect-[4/5] w-full rounded-xl object-cover"
                             />
-                            <span className="mt-2 block text-xs font-medium text-gray-600 underline group-hover:text-gray-900">
+                            <span className="mt-2 block text-xs font-bold text-muted underline group-hover:text-brand">
                               {label} view
                             </span>
                           </a>
@@ -206,13 +282,13 @@ export default async function CheckInsPage({
                       </h2>
 
                       {checkIn.weight_kg && (
-                        <p className="mt-1 text-sm text-gray-600">
+                        <p className="mt-1 text-sm text-muted">
                           Weight: {checkIn.weight_kg} kg
                         </p>
                       )}
                     </div>
 
-                    <span className="text-sm text-gray-600">
+                    <span className="rounded-full bg-surface-subtle px-3 py-1 text-sm font-bold text-muted">
                       Energy {checkIn.energy_score}/5 · Mood{" "}
                       {checkIn.mood_score}/5
                     </span>
@@ -228,9 +304,9 @@ export default async function CheckInsPage({
                     ].map(([label, value, unit]) => (
                       <div
                         key={label}
-                        className="rounded-md border border-gray-200 bg-gray-50 p-3"
+                        className="rounded-xl border border-border bg-surface-subtle p-3"
                       >
-                        <dt className="text-xs text-gray-500">{label}</dt>
+                        <dt className="text-xs text-muted">{label}</dt>
                         <dd className="mt-1 font-medium">
                           {value ? `${value} ${unit}` : "—"}
                         </dd>
@@ -244,12 +320,12 @@ export default async function CheckInsPage({
                     </p>
                   )}
 
-                  <div className="mt-4 rounded-md bg-gray-50 p-4">
-                    <p className="text-sm font-medium">
+                  <div className="mt-4 rounded-xl bg-surface-subtle p-4">
+                    <p className="text-sm font-bold">
                       Coach feedback
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-600">
+                    <p className="mt-1 text-sm text-muted">
                       {checkIn.coach_feedback ??
                         "Your coach has not reviewed this check-in yet."}
                     </p>

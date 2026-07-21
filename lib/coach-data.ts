@@ -37,7 +37,9 @@ export async function getClientRoster(workspaceId: string) {
   const supabase = await createClient();
   const { data: clients, error } = await supabase
     .from("clients")
-    .select("id, first_name, last_name, email, phone, status, user_id, check_ins(week_start, energy_score, mood_score)")
+    .select(
+      "id, first_name, last_name, email, phone, status, user_id, check_ins(week_start, energy_score, mood_score), workout_plan_assignments(status, starts_on, workout_plans(name)), nutrition_plan_assignments(status, starts_on, nutrition_plans(name))",
+    )
     .eq("workspace_id", workspaceId)
     .order("first_name");
 

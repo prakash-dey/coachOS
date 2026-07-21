@@ -5,15 +5,16 @@ import { isValidElement, type AnchorHTMLAttributes, type ButtonHTMLAttributes, t
 import { useFormStatus } from "react-dom";
 
 import { cn } from "./cn";
+import { ui } from "./design-system";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
-const base = "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60";
+const base = cn("inline-flex items-center justify-center gap-2 font-bold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]", ui.radius.control, ui.focus);
 const variants: Record<Variant, string> = {
-  primary: "bg-brand text-white shadow-sm hover:bg-brand-strong hover:shadow-md",
-  secondary: "border border-border bg-surface text-foreground shadow-sm hover:border-brand/35 hover:bg-surface-subtle",
-  ghost: "text-brand hover:bg-brand/5",
+  primary: "bg-brand text-white shadow-md shadow-brand/15 hover:bg-brand-strong hover:shadow-lift",
+  secondary: "border-2 border-border-strong bg-surface text-foreground shadow-sm hover:border-brand/45 hover:bg-surface-muted",
+  ghost: "text-brand shadow-none hover:bg-brand/7",
   danger: "border border-red-200 bg-red-50 text-red-700 shadow-none hover:bg-red-100 hover:text-red-800",
 };
 const sizes: Record<Size, string> = {
