@@ -1,16 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import imageCompression from "browser-image-compression";
+
 import { Button, ButtonLink } from "@/app/components/ui/Button";
-import { Field, Input, Select, Textarea } from "@/app/components/ui/FormControls";
+import {
+  ALLOWED_IMAGE_TYPES,
+  FormSection,
+  MAX_COMPRESSED_PHOTO_SIZE,
+  MAX_ORIGINAL_PHOTO_SIZE,
+  NumberInputField,
+  PhotoUploadField,
+  SelectField,
+  TextareaField,
+  compressPhoto,
+  photoGuides,
+} from "@/app/client/_components/ClientIntakeFormFields";
 
 import { submitCheckIn } from "./actions";
-
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-const MAX_ORIGINAL_SIZE = 15 * 1024 * 1024;
-const MAX_COMPRESSED_SIZE = 900 * 1024;
 
 export default function CheckInForm() {
   const [isCompressing, setIsCompressing] = useState(false);
@@ -22,56 +28,55 @@ export default function CheckInForm() {
   async function handleSubmit(formData: FormData) {
     setPhotoError(null);
 
-    const originalPhoto = formData.get("progressPhoto");
+    for (const guide of photoGuides) {
+      const photo = formData.get(guide.field);
 
-    if (!(originalPhoto instanceof File) || originalPhoto.size === 0) {
-      setPhotoError("Choose a progress photo.");
-      return;
-    }
+      if (!(photo instanceof File) || photo.size === 0) {
+        setPhotoError(`Upload the ${guide.title.toLowerCase()} photo.`);
+        return;
+      }
 
-    if (!ALLOWED_IMAGE_TYPES.has(originalPhoto.type)) {
-      setPhotoError("Use a JPEG, PNG, or WebP image.");
-      return;
-    }
+      if (!ALLOWED_IMAGE_TYPES.has(photo.type)) {
+        setPhotoError("Use JPEG, PNG, or WebP photos.");
+        return;
+      }
 
-    if (originalPhoto.size > MAX_ORIGINAL_SIZE) {
-      setPhotoError("The original image must be smaller than 15 MB.");
-      return;
+      if (photo.size > MAX_ORIGINAL_PHOTO_SIZE) {
+        setPhotoError("Each original photo must be smaller than 15 MB.");
+        return;
+      }
     }
 
     setIsCompressing(true);
 
-    let compressedPhoto: File;
-
     try {
-      const compressedImage = await imageCompression(originalPhoto, {
-        maxSizeMB: 0.6,
-        maxWidthOrHeight: 1600,
-        useWebWorker: true,
-        fileType: "image/webp",
-        initialQuality: 0.8,
-        preserveExif: false,
-      });
+      const [frontPhoto, sidePhoto, backPhoto] = await Promise.all([
+        compressPhoto(formData.get("frontPhoto") as File, "front.webp"),
+        compressPhoto(formData.get("sidePhoto") as File, "side.webp"),
+        compressPhoto(formData.get("backPhoto") as File, "back.webp"),
+      ]);
 
-      compressedPhoto = new File([compressedImage], "progress-photo.webp", {
-        type: "image/webp",
-        lastModified: Date.now(),
-      });
+      const compressedPhotos = [frontPhoto, sidePhoto, backPhoto];
+
+      if (
+        compressedPhotos.some((photo) => photo.size > MAX_COMPRESSED_PHOTO_SIZE)
+      ) {
+        setPhotoError(
+          "One photo is still too large after compression. Try a smaller image.",
+        );
+        setIsCompressing(false);
+        return;
+      }
+
+      formData.set("frontPhoto", frontPhoto);
+      formData.set("sidePhoto", sidePhoto);
+      formData.set("backPhoto", backPhoto);
     } catch {
-      setPhotoError("We could not process that image. Try another one.");
+      setPhotoError("We could not process those photos. Try different images.");
       setIsCompressing(false);
       return;
     }
 
-    if (compressedPhoto.size > MAX_COMPRESSED_SIZE) {
-      setPhotoError(
-        "The compressed image is still too large. Try a smaller image.",
-      );
-      setIsCompressing(false);
-      return;
-    }
-
-    formData.set("progressPhoto", compressedPhoto);
     setIsCompressing(false);
 
     startTransition(async () => {
@@ -80,108 +85,151 @@ export default function CheckInForm() {
   }
 
   return (
-    <form action={handleSubmit} className="mt-8 space-y-5">
-      <Field label="This week’s progress photo" htmlFor="progressPhoto">
-        <Input
-          id="progressPhoto"
-          name="progressPhoto"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          required
-          disabled={isSubmitting}
-          className="block text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
-        />
-
-        <p className="mt-2 text-sm text-gray-500">
-          Required. JPEG, PNG, or WebP up to 15 MB. The image is compressed
-          before upload and visible only to you and your coach.
+    <form action={handleSubmit} className="mt-8 space-y-8">
+      <section className="rounded-[2rem] border border-border bg-surface p-5 shadow-sm sm:p-6">
+        <h2 className="text-xl font-semibold">Progress photos</h2>
+        <p className="mt-2 text-sm text-muted">
+          Required weekly front, side, and back photos. Use similar lighting and
+          distance each week so your coach can compare progress properly.
         </p>
-
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {photoGuides.map((guide) => (
+            <PhotoUploadField
+              key={guide.field}
+              guide={guide}
+              disabled={isSubmitting}
+            />
+          ))}
+        </div>
         {photoError && (
-          <p className="mt-2 text-sm text-red-700" role="alert">
+          <p className="mt-3 text-sm text-red-700" role="alert">
             {photoError}
           </p>
         )}
-      </Field>
+      </section>
 
-      <Field label="Current weight in kilograms" htmlFor="weightKg" hint="Optional">
-        <Input
-          id="weightKg"
+      <FormSection
+        title="Weekly measurements"
+        description="Use the same tape position each week. All measurements are required for consistent progress tracking."
+        columns={3}
+      >
+        <NumberInputField
           name="weightKg"
-          type="number"
-          inputMode="decimal"
+          label="Weight (kg)"
           min="20"
           max="500"
           step="0.01"
+          placeholder="74.5"
+          required
         />
-      </Field>
+        <NumberInputField
+          name="waistCm"
+          label="Waist (cm)"
+          min="30"
+          max="250"
+          step="0.01"
+          placeholder="84"
+          required
+        />
+        <NumberInputField
+          name="chestCm"
+          label="Chest (cm)"
+          min="30"
+          max="250"
+          step="0.01"
+          placeholder="96"
+          required
+        />
+        <NumberInputField
+          name="hipCm"
+          label="Hip (cm)"
+          min="30"
+          max="250"
+          step="0.01"
+          placeholder="98"
+          required
+        />
+        <NumberInputField
+          name="thighCm"
+          label="Thigh (cm)"
+          min="20"
+          max="150"
+          step="0.01"
+          placeholder="56"
+          required
+        />
+        <NumberInputField
+          name="armCm"
+          label="Arm (cm)"
+          min="10"
+          max="100"
+          step="0.01"
+          placeholder="32"
+          required
+        />
+      </FormSection>
 
-      <Field label="Energy level" htmlFor="energyScore">
-        <Select
-          id="energyScore"
+      <FormSection
+        title="How this week felt"
+        description="A quick pulse check helps your coach adjust training, nutrition, and recovery."
+      >
+        <SelectField
           name="energyScore"
+          label="Energy level"
+          placeholder="Select energy level"
           required
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Select energy level
-          </option>
-          <option value="1">1 — Very low</option>
-          <option value="2">2 — Low</option>
-          <option value="3">3 — Average</option>
-          <option value="4">4 — Good</option>
-          <option value="5">5 — Excellent</option>
-        </Select>
-      </Field>
-
-      <Field label="Mood" htmlFor="moodScore">
-        <Select
-          id="moodScore"
-          name="moodScore"
-          required
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Select mood
-          </option>
-          <option value="1">1 — Very low</option>
-          <option value="2">2 — Low</option>
-          <option value="3">3 — Okay</option>
-          <option value="4">4 — Good</option>
-          <option value="5">5 — Excellent</option>
-        </Select>
-      </Field>
-
-      <Field label="Notes for your coach" htmlFor="notes">
-        <Textarea
-          id="notes"
-          name="notes"
-          rows={6}
-          maxLength={3000}
-          placeholder="Wins, challenges, sleep, training, nutrition..."
+          options={[
+            { value: "1", label: "1 — Very low" },
+            { value: "2", label: "2 — Low" },
+            { value: "3", label: "3 — Average" },
+            { value: "4", label: "4 — Good" },
+            { value: "5", label: "5 — Excellent" },
+          ]}
         />
-      </Field>
+        <SelectField
+          name="moodScore"
+          label="Mood"
+          placeholder="Select mood"
+          required
+          options={[
+            { value: "1", label: "1 — Very low" },
+            { value: "2", label: "2 — Low" },
+            { value: "3", label: "3 — Okay" },
+            { value: "4", label: "4 — Good" },
+            { value: "5", label: "5 — Excellent" },
+          ]}
+        />
+        <div className="md:col-span-2">
+          <TextareaField
+            name="notes"
+            label="Notes for your coach"
+            hint="Optional"
+            rows={6}
+            maxLength={3000}
+            placeholder="Wins, challenges, cravings, sleep, training, digestion, soreness..."
+          />
+        </div>
+      </FormSection>
 
       <div aria-live="polite">
         {isCompressing && (
-          <p className="text-sm text-gray-600">Compressing your photo…</p>
+          <p className="text-sm text-muted">Preparing your photos…</p>
         )}
 
         {isPending && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Uploading and submitting your check-in…
           </p>
         )}
       </div>
 
       <div className="flex items-center gap-3">
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-        >
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Submitting..." : "Submit check-in"}
         </Button>
-        <ButtonLink href="/client/check-ins" variant="ghost">Cancel</ButtonLink>
+        <ButtonLink href="/client/check-ins" variant="ghost">
+          Cancel
+        </ButtonLink>
       </div>
     </form>
   );

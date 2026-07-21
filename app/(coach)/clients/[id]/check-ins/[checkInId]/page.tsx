@@ -5,6 +5,31 @@ import { Button } from "@/app/components/ui/Button";
 import { createClient } from "@/lib/supabase/server";
 import { saveFeedback } from "./actions";
 const PHOTO_BUCKET = "check-in-photos";
+
+async function createSignedPhotoUrls(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  paths: Array<string | null>,
+) {
+  const uniquePaths = Array.from(new Set(paths.filter(Boolean) as string[]));
+
+  const urls = await Promise.all(
+    uniquePaths.map(async (path) => {
+      const { data, error } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .createSignedUrl(path, 600);
+
+      return error || !data?.signedUrl
+        ? null
+        : {
+            path,
+            url: data.signedUrl,
+          };
+    }),
+  );
+
+  return urls.filter(Boolean) as Array<{ path: string; url: string }>;
+}
+
 export default async function ReviewCheckInPage({
   params,
 }: {
@@ -25,20 +50,19 @@ export default async function ReviewCheckInPage({
   const { data: checkIn } = await supabase
     .from("check_ins")
     .select(
-      "id, week_start, weight_kg, energy_score, mood_score, notes, coach_feedback, progress_photo_path, clients(first_name, last_name)",
+      "id, week_start, weight_kg, waist_cm, chest_cm, hip_cm, thigh_cm, arm_cm, energy_score, mood_score, notes, coach_feedback, progress_photo_path, front_photo_path, side_photo_path, back_photo_path, clients(first_name, last_name)",
     )
     .eq("id", checkInId)
     .eq("client_id", id)
     .eq("workspace_id", workspace.id)
     .maybeSingle();
   if (!checkIn) notFound();
-  let photoUrl: string | null = null;
-  if (checkIn.progress_photo_path) {
-    const { data } = await supabase.storage
-      .from(PHOTO_BUCKET)
-      .createSignedUrl(checkIn.progress_photo_path, 600);
-    photoUrl = data?.signedUrl ?? null;
-  }
+  const photoUrls = await createSignedPhotoUrls(supabase, [
+    checkIn.front_photo_path ?? checkIn.progress_photo_path,
+    checkIn.side_photo_path,
+    checkIn.back_photo_path,
+  ]);
+
   const client = checkIn.clients as unknown as {
     first_name: string;
     last_name: string;
@@ -64,22 +88,34 @@ export default async function ReviewCheckInPage({
         </header>
         <div className="mt-8 grid gap-5 lg:grid-cols-[.8fr_1.2fr]">
           <section className="space-y-4">
-            {photoUrl ? (
-              <a
-                href={photoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="block overflow-hidden rounded-[2rem] bg-surface"
-              >
-                <img
-                  src={photoUrl}
-                  alt={`Progress for week of ${checkIn.week_start}`}
-                  className="aspect-[4/5] w-full object-cover"
-                />
-              </a>
+            {photoUrls.length > 0 ? (
+              <div className="grid gap-3">
+                {photoUrls.map((photo, index) => {
+                  const label = ["Front", "Side", "Back"][index] ?? "Progress";
+
+                  return (
+                    <a
+                      key={photo.path}
+                      href={photo.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block overflow-hidden rounded-[2rem] bg-surface"
+                    >
+                      <img
+                        src={photo.url}
+                        alt={`${label} progress for week of ${checkIn.week_start}`}
+                        className="aspect-[4/5] w-full object-cover"
+                      />
+                      <span className="block px-4 py-3 text-sm font-semibold text-brand">
+                        Open {label.toLowerCase()} view full size
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
             ) : (
               <div className="grid aspect-[4/3] place-items-center rounded-[2rem] border border-dashed border-border bg-surface text-sm text-muted">
-                No progress photo
+                No progress photos
               </div>
             )}
             <div className="grid grid-cols-3 gap-3">
@@ -102,6 +138,27 @@ export default async function ReviewCheckInPage({
                   <small> kg</small>
                 </p>
               </div>
+            </div>
+            <div className="rounded-[2rem] border border-border bg-surface p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">
+                Measurements
+              </p>
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                {[
+                  ["Waist", checkIn.waist_cm, "cm"],
+                  ["Chest", checkIn.chest_cm, "cm"],
+                  ["Hip", checkIn.hip_cm, "cm"],
+                  ["Thigh", checkIn.thigh_cm, "cm"],
+                  ["Arm", checkIn.arm_cm, "cm"],
+                ].map(([label, value, unit]) => (
+                  <div key={label} className="rounded-2xl bg-background p-3">
+                    <dt className="text-xs text-muted">{label}</dt>
+                    <dd className="mt-1 font-semibold">
+                      {value ? `${value} ${unit}` : "—"}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </section>
           <section className="rounded-[2rem] border border-border bg-surface p-6 sm:p-8">

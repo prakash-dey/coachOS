@@ -1,351 +1,23 @@
 "use client";
 
-import { type ReactNode, useState, useTransition } from "react";
-import imageCompression from "browser-image-compression";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/app/components/ui/Button";
-import { Input, Select, Textarea } from "@/app/components/ui/FormControls";
+import {
+  ALLOWED_IMAGE_TYPES,
+  FormSection,
+  MAX_COMPRESSED_PHOTO_SIZE,
+  MAX_ORIGINAL_PHOTO_SIZE,
+  NumberInputField,
+  PhotoUploadField,
+  SelectField,
+  TextareaField,
+  TextInputField,
+  compressPhoto,
+  photoGuides,
+} from "@/app/client/_components/ClientIntakeFormFields";
 
 import { submitClientOnboarding } from "./actions";
-
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_ORIGINAL_SIZE = 15 * 1024 * 1024;
-const MAX_COMPRESSED_SIZE = 900 * 1024;
-
-type PhotoFieldName = "frontPhoto" | "sidePhoto" | "backPhoto";
-
-const photoGuides: Array<{
-  field: PhotoFieldName;
-  title: string;
-  hint: string;
-}> = [
-  {
-    field: "frontPhoto",
-    title: "Front view",
-    hint: "Stand relaxed, feet visible, camera at chest height.",
-  },
-  {
-    field: "sidePhoto",
-    title: "Side view",
-    hint: "Turn 90°, keep arms relaxed, same lighting if possible.",
-  },
-  {
-    field: "backPhoto",
-    title: "Back view",
-    hint: "Face away from camera, full body in frame.",
-  },
-];
-
-function Field({
-  label,
-  htmlFor,
-  hint,
-  required = false,
-  height = "40px",
-  children,
-}: Readonly<{
-  label: string;
-  htmlFor: string;
-  hint?: string;
-  required?: boolean;
-  children: React.ReactNode;
-  height?: string;
-}>) {
-  return (
-    <div className="">
-      <div className={`h-[${height}]`}>
-        <label
-          htmlFor={htmlFor}
-          className="text-sm font-semibold text-foreground"
-        >
-          {label}
-          {required && <span className="text-red-600"> *</span>}
-        </label>
-        {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
-      </div>
-      <div>{children}</div>
-    </div>
-  );
-}
-
-function PhotoGuideIllustration({ type }: Readonly<{ type: PhotoFieldName }>) {
-  const isSide = type === "sidePhoto";
-
-  return (
-    <svg
-      viewBox="0 0 120 130"
-      role="img"
-      aria-label={`${type.replace("Photo", "")} pose guide`}
-      className="h-32 w-full text-brand"
-    >
-      <rect
-        x="14"
-        y="10"
-        width="92"
-        height="110"
-        rx="28"
-        className="fill-brand/5"
-      />
-      <circle
-        cx="60"
-        cy="32"
-        r={isSide ? 9 : 12}
-        className="fill-current"
-        opacity="0.85"
-      />
-      <path
-        d={
-          isSide
-            ? "M58 48 C70 50 74 68 69 92 L65 112 M58 50 C49 65 48 85 52 112"
-            : "M42 51 C50 45 70 45 78 51 L74 90 C70 101 50 101 46 90 Z"
-        }
-        className="fill-none stroke-current"
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.9"
-      />
-      {!isSide && (
-        <>
-          <path
-            d="M43 58 L28 82 M77 58 L92 82 M50 96 L44 114 M70 96 L76 114"
-            className="fill-none stroke-current"
-            strokeWidth="7"
-            strokeLinecap="round"
-            opacity="0.75"
-          />
-          {type === "backPhoto" && (
-            <path
-              d="M48 58 C55 63 65 63 72 58"
-              className="fill-none stroke-current"
-              strokeWidth="4"
-              strokeLinecap="round"
-              opacity="0.55"
-            />
-          )}
-        </>
-      )}
-    </svg>
-  );
-}
-
-async function compressPhoto(photo: File, fileName: string) {
-  const compressedImage = await imageCompression(photo, {
-    maxSizeMB: 0.6,
-    maxWidthOrHeight: 1600,
-    useWebWorker: true,
-    fileType: "image/webp",
-    initialQuality: 0.8,
-    preserveExif: false,
-  });
-
-  return new File([compressedImage], fileName, {
-    type: "image/webp",
-    lastModified: Date.now(),
-  });
-}
-
-type SelectOption = {
-  value: string;
-  label: string;
-};
-
-function FormSection({
-  title,
-  description,
-  columns = 2,
-  children,
-}: Readonly<{
-  title: string;
-  description: string;
-  columns?: 2 | 3;
-  children: ReactNode;
-}>) {
-  return (
-    <section
-      className={`grid gap-5 rounded-[2rem] border border-border bg-surface p-5 shadow-sm sm:p-6 ${columns === 3 ? "md:grid-cols-3" : "md:grid-cols-2"}`}
-    >
-      <div className={columns === 3 ? "md:col-span-3" : "md:col-span-2"}>
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <p className="mt-2 text-sm text-muted">{description}</p>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function TextInputField({
-  name,
-  label,
-  hint,
-  placeholder,
-  required = false,
-  type = "text",
-  minLength,
-  maxLength,
-}: Readonly<{
-  name: string;
-  label: string;
-  hint?: string;
-  placeholder?: string;
-  required?: boolean;
-  type?: "text" | "tel";
-  minLength?: number;
-  maxLength?: number;
-}>) {
-  return (
-    <Field label={label} htmlFor={name} hint={hint} required={required}>
-      <Input
-        id={name}
-        name={name}
-        type={type}
-        minLength={minLength}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        required={required}
-      />
-    </Field>
-  );
-}
-
-function NumberInputField({
-  name,
-  label,
-  hint,
-  placeholder,
-  required = false,
-  min,
-  max,
-  step,
-}: Readonly<{
-  name: string;
-  label: string;
-  hint?: string;
-  placeholder?: string;
-  required?: boolean;
-  min: string;
-  max: string;
-  step: string;
-}>) {
-  return (
-    <Field label={label} htmlFor={name} hint={hint} required={required}>
-      <Input
-        id={name}
-        name={name}
-        type="number"
-        inputMode="decimal"
-        min={min}
-        max={max}
-        step={step}
-        placeholder={placeholder}
-        required={required}
-      />
-    </Field>
-  );
-}
-
-function TextareaField({
-  name,
-  label,
-  hint,
-  placeholder,
-  required = false,
-  rows,
-  minLength,
-  maxLength,
-}: Readonly<{
-  name: string;
-  label: string;
-  hint?: string;
-  placeholder?: string;
-  required?: boolean;
-  rows: number;
-  minLength?: number;
-  maxLength?: number;
-}>) {
-  return (
-    <Field label={label} htmlFor={name} hint={hint} required={required}>
-      <Textarea
-        id={name}
-        name={name}
-        rows={rows}
-        minLength={minLength}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        required={required}
-      />
-    </Field>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  hint,
-  placeholder,
-  options,
-  required = false,
-  optionalPlaceholder = false,
-}: Readonly<{
-  name: string;
-  label: string;
-  hint?: string;
-  placeholder: string;
-  options: SelectOption[];
-  required?: boolean;
-  optionalPlaceholder?: boolean;
-}>) {
-  return (
-    <Field label={label} htmlFor={name} hint={hint} required={required}>
-      <Select id={name} name={name} defaultValue="" required={required}>
-        <option value="" disabled={!optionalPlaceholder}>
-          {placeholder}
-        </option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </Select>
-    </Field>
-  );
-}
-
-function PhotoUploadField({
-  guide,
-  disabled,
-}: Readonly<{
-  guide: (typeof photoGuides)[number];
-  disabled: boolean;
-}>) {
-  return (
-    <div className="flex flex-col rounded-2xl border border-border bg-background p-4">
-      <div className="flex shrink-0 items-center justify-center">
-        <PhotoGuideIllustration type={guide.field} />
-      </div>
-
-      <div className="mt-3 flex flex-1 flex-col justify-between">
-        <Field
-          label={guide.title}
-          htmlFor={guide.field}
-          hint={guide.hint}
-          required
-          height="60px"
-        >
-          <Input
-            id={guide.field}
-            name={guide.field}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            required
-            disabled={disabled}
-            className="block text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand hover:file:bg-brand/15"
-          />
-        </Field>
-      </div>
-    </div>
-  );
-}
 
 export default function ClientOnboardingForm() {
   const [isCompressing, setIsCompressing] = useState(false);
@@ -370,7 +42,7 @@ export default function ClientOnboardingForm() {
         return;
       }
 
-      if (photo.size > MAX_ORIGINAL_SIZE) {
+      if (photo.size > MAX_ORIGINAL_PHOTO_SIZE) {
         setPhotoError("Each original photo must be smaller than 15 MB.");
         return;
       }
@@ -387,7 +59,7 @@ export default function ClientOnboardingForm() {
 
       const compressedPhotos = [frontPhoto, sidePhoto, backPhoto];
 
-      if (compressedPhotos.some((photo) => photo.size > MAX_COMPRESSED_SIZE)) {
+      if (compressedPhotos.some((photo) => photo.size > MAX_COMPRESSED_PHOTO_SIZE)) {
         setPhotoError(
           "One photo is still too large after compression. Try a smaller image.",
         );

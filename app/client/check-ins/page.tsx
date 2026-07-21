@@ -7,6 +7,30 @@ import { createClient } from "@/lib/supabase/server";
 
 const PHOTO_BUCKET = "check-in-photos";
 
+async function createSignedPhotoUrls(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  paths: Array<string | null>,
+) {
+  const uniquePaths = Array.from(new Set(paths.filter(Boolean) as string[]));
+
+  const urls = await Promise.all(
+    uniquePaths.map(async (path) => {
+      const { data, error } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .createSignedUrl(path, 600);
+
+      return error || !data?.signedUrl
+        ? null
+        : {
+            path,
+            url: data.signedUrl,
+          };
+    }),
+  );
+
+  return urls.filter(Boolean) as Array<{ path: string; url: string }>;
+}
+
 type CheckInsPageProps = {
   searchParams: Promise<{
     error?: string;
@@ -58,7 +82,7 @@ export default async function CheckInsPage({
   const { data: checkIns, error: checkInsError } = await supabase
     .from("check_ins")
     .select(
-      "id, week_start, weight_kg, energy_score, mood_score, notes, coach_feedback, submitted_at, progress_photo_path",
+      "id, week_start, weight_kg, waist_cm, chest_cm, hip_cm, thigh_cm, arm_cm, energy_score, mood_score, notes, coach_feedback, submitted_at, progress_photo_path, front_photo_path, side_photo_path, back_photo_path",
     )
     .eq("workspace_id", membership.workspace_id)
     .eq("client_id", client.id)
@@ -71,20 +95,15 @@ export default async function CheckInsPage({
 
   const checkInsWithPhotos = await Promise.all(
     checkIns.map(async (checkIn) => {
-      if (!checkIn.progress_photo_path) {
-        return {
-          ...checkIn,
-          photoUrl: null,
-        };
-      }
-
-      const { data, error } = await supabase.storage
-        .from(PHOTO_BUCKET)
-        .createSignedUrl(checkIn.progress_photo_path, 600);
+      const photoUrls = await createSignedPhotoUrls(supabase, [
+        checkIn.front_photo_path ?? checkIn.progress_photo_path,
+        checkIn.side_photo_path,
+        checkIn.back_photo_path,
+      ]);
 
       return {
         ...checkIn,
-        photoUrl: error ? null : data.signedUrl,
+        photoUrls,
       };
     }),
   );
@@ -152,29 +171,31 @@ export default async function CheckInsPage({
                   key={checkIn.id}
                   className="rounded-lg border border-gray-200 p-5"
                 >
-                  {checkIn.photoUrl && (
-                    <div className="mb-5">
-                      <a
-                        href={checkIn.photoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Open progress photo for the week of ${weekLabel}`}
-                      >
-                        <img
-                          src={checkIn.photoUrl}
-                          alt={`Progress for the week of ${weekLabel}`}
-                          className="aspect-[4/3] w-full rounded-md object-cover"
-                        />
-                      </a>
+                  {checkIn.photoUrls.length > 0 && (
+                    <div className="mb-5 grid gap-3 sm:grid-cols-3">
+                      {checkIn.photoUrls.map((photo, index) => {
+                        const label = ["Front", "Side", "Back"][index] ?? "Progress";
 
-                      <a
-                        href={checkIn.photoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-2 inline-block text-sm font-medium text-gray-600 underline"
-                      >
-                        View full-size photo
-                      </a>
+                        return (
+                          <a
+                            key={photo.path}
+                            href={photo.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Open ${label.toLowerCase()} progress photo for the week of ${weekLabel}`}
+                            className="group block"
+                          >
+                            <img
+                              src={photo.url}
+                              alt={`${label} progress for the week of ${weekLabel}`}
+                              className="aspect-[4/5] w-full rounded-md object-cover"
+                            />
+                            <span className="mt-2 block text-xs font-medium text-gray-600 underline group-hover:text-gray-900">
+                              {label} view
+                            </span>
+                          </a>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -196,6 +217,26 @@ export default async function CheckInsPage({
                       {checkIn.mood_score}/5
                     </span>
                   </div>
+
+                  <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                    {[
+                      ["Waist", checkIn.waist_cm, "cm"],
+                      ["Chest", checkIn.chest_cm, "cm"],
+                      ["Hip", checkIn.hip_cm, "cm"],
+                      ["Thigh", checkIn.thigh_cm, "cm"],
+                      ["Arm", checkIn.arm_cm, "cm"],
+                    ].map(([label, value, unit]) => (
+                      <div
+                        key={label}
+                        className="rounded-md border border-gray-200 bg-gray-50 p-3"
+                      >
+                        <dt className="text-xs text-gray-500">{label}</dt>
+                        <dd className="mt-1 font-medium">
+                          {value ? `${value} ${unit}` : "—"}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
 
                   {checkIn.notes && (
                     <p className="mt-4 whitespace-pre-wrap text-sm">
