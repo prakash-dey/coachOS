@@ -35,11 +35,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12">
-      <div aria-hidden="true" className="absolute -left-32 -top-32 size-96 rounded-full bg-accent/25 blur-3xl" />
-      <Card className="relative w-full max-w-md p-7 sm:p-9">
+      <div aria-hidden="true" className="absolute -left-32 -top-32 size-96 rounded-full bg-brand-soft/40 blur-3xl" />
+      <div aria-hidden="true" className="absolute -right-24 bottom-0 size-96 rounded-full bg-warm-soft/35 blur-3xl" />
+      <Card className="relative w-full max-w-md rounded-2xl p-7 sm:p-9">
         <BrandLink />
-        <p className="mt-10 text-xs font-bold uppercase tracking-[.18em] text-brand">Welcome back</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Sign in to your workspace</h1>
+        <p className="mt-10 text-xs font-bold uppercase tracking-[.18em] text-warm">Welcome back</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">Sign in to your workspace</h1>
 
         <p className="mt-3 text-sm leading-6 text-muted">Continue securely with your Google account to manage your coaching business.</p>
 

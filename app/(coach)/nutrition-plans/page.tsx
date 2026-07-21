@@ -1,5 +1,6 @@
-import Link from "next/link";
-
+import { ButtonLink } from "@/app/components/ui/Button";
+import { EmptyState } from "@/app/components/ui/Layout";
+import { LeafIcon } from "@/app/components/ui/Icons";
 import { PlanCard } from "@/app/components/ui/PlanCard";
 import { getCoachContext } from "@/lib/auth-context";
 import { getNutritionPlanLibrary } from "@/lib/coach-data";
@@ -15,15 +16,15 @@ export default async function NutritionPlansPage() {
   const plans = await getNutritionPlanLibrary(workspace.id);
 
   return (
-    <main className="px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+    <main className="px-4 py-7 sm:px-6 lg:px-10 lg:py-10">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[.2em] text-[#b05a28]">Nutrition atelier</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Nutrition plans</h1>
+            <p className="text-xs font-bold uppercase tracking-[.2em] text-warm">Nutrition atelier</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">Nutrition plans</h1>
             <p className="mt-2 text-muted">Flexible food frameworks for {workspace.name}.</p>
           </div>
-          <Link href="/nutrition-plans/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white">+ Create plan</Link>
+          <ButtonLink href="/nutrition-plans/new">+ Create plan</ButtonLink>
         </header>
 
         {plans.length ? (
@@ -55,13 +56,13 @@ export default async function NutritionPlansPage() {
             })}
           </div>
         ) : (
-          <div className="mt-8 grid min-h-80 place-items-center rounded-[2rem] border border-dashed border-brand/30 bg-surface p-8 text-center">
-            <div>
-              <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#fff0e7] text-2xl">◌</span>
-              <h2 className="mt-5 text-xl font-semibold">Create your first food framework</h2>
-              <p className="mt-2 text-sm text-muted">Build meals, portions, macros, and flexible alternatives.</p>
-            </div>
-          </div>
+          <EmptyState
+            className="mt-8"
+            title="Create your first food framework"
+            description="Build meals, portions, macros, and flexible alternatives."
+            icon={<LeafIcon className="h-6 w-6" />}
+            action={<ButtonLink href="/nutrition-plans/new">Create plan</ButtonLink>}
+          />
         )}
       </div>
     </main>

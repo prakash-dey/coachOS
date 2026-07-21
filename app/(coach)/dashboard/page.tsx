@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ButtonLink } from "@/app/components/ui/Button";
+import { Badge, MetricTile, Surface } from "@/app/components/ui/Layout";
 import { getCoachContext } from "@/lib/auth-context";
 import { getDashboardSummary } from "@/lib/coach-data";
 
@@ -37,40 +39,40 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const averageMood = weeklyCheckIns.length ? (weeklyCheckIns.reduce((sum, item) => sum + item.mood_score, 0) / weeklyCheckIns.length).toFixed(1) : "—";
 
   return (
-    <main className="px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+    <main className="px-4 py-7 sm:px-6 lg:px-10 lg:py-10">
       <div className="mx-auto max-w-7xl">
         {params.error === "demo_switch_failed" && <p role="alert" className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">We couldn’t end your current session, so demo mode was not started. Your workspace is unchanged.</p>}
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div><p className="text-xs font-bold uppercase tracking-[.2em] text-brand">Command center</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Good to see you.</h1><p className="mt-2 text-muted">Here’s the pulse of {workspace.name} this week.</p></div>
+          <div><p className="text-xs font-bold uppercase tracking-[.2em] text-warm">Command center</p><h1 className="mt-2 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">Good to see you.</h1><p className="mt-2 text-muted">Here’s the pulse of {workspace.name} this week.</p></div>
           <div className="flex flex-wrap gap-3">
-            {!workspace.is_demo && <Link href="/demo/switch" className="inline-flex min-h-11 items-center justify-center rounded-full border border-brand/25 bg-surface px-5 text-sm font-semibold text-brand transition hover:border-brand/50 hover:bg-brand/5">Explore demo</Link>}
-            <Link href="/clients/new" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/15 transition hover:-translate-y-0.5 hover:bg-brand-strong">+ Add a client</Link>
+            {!workspace.is_demo && <ButtonLink href="/demo/switch" variant="secondary">Explore demo</ButtonLink>}
+            <ButtonLink href="/clients/new">+ Add a client</ButtonLink>
           </div>
         </header>
 
         <section className="mt-8 grid gap-4 xl:grid-cols-[1.45fr_.8fr]">
-          <div className="relative overflow-hidden rounded-[2rem] bg-brand-strong p-6 text-white sm:p-8">
+          <Surface tone="brand" padding="lg" className="relative overflow-hidden">
             <div aria-hidden="true" className="absolute -right-20 -top-24 h-72 w-72 rounded-full border-[42px] border-white/[.04]" />
             <div className="relative flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
-              <div><p className="text-sm font-medium text-accent">Weekly rhythm</p><h2 className="mt-3 max-w-md text-2xl font-semibold sm:text-3xl">{weeklyCheckIns.length} of {activeClients.length} clients checked in</h2><p className="mt-3 max-w-lg text-sm leading-6 text-white/65">The ring fills as your active roster reports. Keep the rhythm moving by reviewing anything waiting.</p><Link href="/clients" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-brand-strong">Review client roster →</Link></div>
+              <div><p className="text-sm font-medium text-accent">Weekly rhythm</p><h2 className="mt-3 max-w-md text-2xl font-semibold sm:text-3xl">{weeklyCheckIns.length} of {activeClients.length} clients checked in</h2><p className="mt-3 max-w-lg text-sm leading-6 text-white/65">The ring fills as your active roster reports. Keep the rhythm moving by reviewing anything waiting.</p><ButtonLink href="/clients" variant="secondary" className="mt-6 border-white/20 bg-accent text-brand-strong hover:bg-accent/90">Review client roster →</ButtonLink></div>
               <Ring value={responseRate} label="response" />
             </div>
-          </div>
+          </Surface>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-[1.6rem] border border-border bg-surface p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted">Energy</p><p className="mt-4 text-4xl font-semibold">{averageEnergy}<span className="text-base text-muted">/5</span></p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-[#ff9a62]" style={{ width: averageEnergy === "—" ? "0%" : `${Number(averageEnergy) * 20}%` }} /></div></div>
-            <div className="rounded-[1.6rem] border border-border bg-surface p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted">Mood</p><p className="mt-4 text-4xl font-semibold">{averageMood}<span className="text-base text-muted">/5</span></p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-[#8b7cf6]" style={{ width: averageMood === "—" ? "0%" : `${Number(averageMood) * 20}%` }} /></div></div>
-            <Link href="/clients" className="col-span-2 flex items-center justify-between rounded-[1.6rem] border border-border bg-surface p-5 transition hover:border-brand/40"><div><p className="text-xs font-bold uppercase tracking-wider text-muted">Active clients</p><p className="mt-1 text-3xl font-semibold">{activeClients.length}</p></div><span className="grid h-11 w-11 place-items-center rounded-full bg-background text-brand">→</span></Link>
+            <MetricTile label="Energy" value={averageEnergy} unit="/5" tone="warm" />
+            <MetricTile label="Mood" value={averageMood} unit="/5" tone="purple" />
+            <Link href="/clients" className="col-span-2 flex items-center justify-between rounded-2xl border border-border bg-surface p-5 shadow-card transition hover:border-brand/40"><div><p className="text-xs font-bold uppercase tracking-wider text-muted">Active clients</p><p className="mt-1 text-3xl font-semibold">{activeClients.length}</p></div><span className="grid h-11 w-11 place-items-center rounded-full bg-background text-brand">→</span></Link>
           </div>
         </section>
 
         <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_.72fr]">
-          <div className="rounded-[2rem] border border-border bg-surface p-6">
-            <div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-muted">Inbox</p><h2 className="mt-1 text-xl font-semibold">Needs your attention</h2></div><span className="rounded-full bg-[#fff1e7] px-3 py-1 text-xs font-bold text-[#a94918]">{pendingReviews.length} open</span></div>
+          <Surface>
+            <div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-muted">Inbox</p><h2 className="mt-1 text-xl font-semibold">Needs your attention</h2></div><Badge tone="warm">{pendingReviews.length} open</Badge></div>
             {pendingReviews.length ? <div className="mt-5 divide-y divide-border">{pendingReviews.slice(0, 5).map((checkIn) => { const relation = checkIn.clients as unknown as { first_name: string; last_name: string } | null; return <Link key={checkIn.id} href={`/clients/${checkIn.client_id}/check-ins`} className="flex min-h-16 items-center justify-between gap-4 py-3"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-background text-sm font-bold text-brand">{relation?.first_name?.[0] ?? "C"}</span><div><p className="text-sm font-semibold">{relation ? `${relation.first_name} ${relation.last_name}` : "Client"}</p><p className="text-xs text-muted">Energy {checkIn.energy_score}/5 · Mood {checkIn.mood_score}/5</p></div></div><span className="text-sm text-brand">Review →</span></Link>; })}</div> : <div className="mt-8 rounded-2xl bg-background p-7 text-center"><p className="font-semibold">Inbox zero ✦</p><p className="mt-1 text-sm text-muted">Every check-in has been reviewed.</p></div>}
-          </div>
+          </Surface>
 
-          <div className="rounded-[2rem] border border-border bg-[#e7ebff] p-6"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5145a5]">Plan studio</p><h2 className="mt-2 text-xl font-semibold">Build once. Coach personally.</h2><p className="mt-2 text-sm leading-6 text-muted">You have {plans.length} training plans in your library. Turn your best programming into reusable systems.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/workout-plans" className="inline-flex min-h-11 items-center rounded-full bg-[#5145a5] px-5 text-sm font-semibold text-white">Workout plans</Link><Link href="/nutrition-plans" className="inline-flex min-h-11 items-center rounded-full bg-white/70 px-5 text-sm font-semibold text-[#5145a5] transition hover:bg-white">Nutrition plans</Link></div></div>
+          <Surface className="bg-[#e7ebff]"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5145a5]">Plan studio</p><h2 className="mt-2 text-xl font-semibold">Build once. Coach personally.</h2><p className="mt-2 text-sm leading-6 text-muted">You have {plans.length} training plans in your library. Turn your best programming into reusable systems.</p><div className="mt-7 flex flex-wrap gap-3"><ButtonLink href="/workout-plans" className="bg-[#5145a5] text-white hover:bg-[#443995]">Workout plans</ButtonLink><ButtonLink href="/nutrition-plans" variant="secondary" className="bg-white/70 text-[#5145a5] hover:bg-white">Nutrition plans</ButtonLink></div></Surface>
         </section>
       </div>
     </main>

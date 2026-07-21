@@ -1,0 +1,10 @@
+<svg width="960" height="1200" viewBox="0 0 960 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="1200" rx="56" fill="#F4ECEF"/>
+  <rect x="120" y="92" width="720" height="1016" rx="40" fill="#FAF9F7"/>
+  <path d="M170 1040H790" stroke="#D9D3CC" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="480" cy="248" r="76" fill="#253C34"/>
+  <path d="M376 368C402 335 443 318 480 318C517 318 558 335 584 368L636 541C646 575 625 610 590 614L552 619L590 979C594 1019 563 1054 523 1054H437C397 1054 366 1019 370 979L408 619L370 614C335 610 314 575 324 541L376 368Z" fill="#C2B4A4"/>
+  <path d="M418 446C450 468 510 468 542 446" stroke="#253C34" stroke-width="14" stroke-linecap="round"/>
+  <path d="M424 618H536" stroke="#253C34" stroke-width="16" stroke-linecap="round"/>
+  <text x="480" y="1134" text-anchor="middle" fill="#253C34" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="800">Back baseline</text>
+</svg>

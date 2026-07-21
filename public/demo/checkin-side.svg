@@ -1,0 +1,9 @@
+<svg width="960" height="1200" viewBox="0 0 960 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="1200" rx="56" fill="#EEF4EE"/>
+  <rect x="116" y="88" width="728" height="1024" rx="44" fill="#FFFEFC"/>
+  <path d="M170 1042H790" stroke="#D2DCCE" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="526" cy="247" r="70" fill="#0D3F31"/>
+  <path d="M470 330C512 319 554 337 575 374L609 438C630 477 618 525 583 550L546 577L574 975C577 1020 542 1058 497 1058H452C412 1058 380 1026 379 986L374 604L348 587C323 570 314 538 328 510L420 368C431 350 449 336 470 330Z" fill="#72A98F"/>
+  <path d="M454 616H547" stroke="#0D3F31" stroke-width="16" stroke-linecap="round"/>
+  <text x="480" y="1134" text-anchor="middle" fill="#0D3F31" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800">Weekly side</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg width="960" height="1200" viewBox="0 0 960 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="1200" rx="56" fill="#EEF3EF"/>
+  <rect x="120" y="92" width="720" height="1016" rx="40" fill="#FAF9F7"/>
+  <path d="M170 1040H790" stroke="#D9D3CC" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="525" cy="247" r="70" fill="#253C34"/>
+  <path d="M471 331C511 319 555 338 575 375L609 439C629 477 618 524 583 549L546 576L574 973C577 1018 542 1056 497 1056H450C411 1056 379 1025 378 986L373 604L348 588C322 571 313 537 328 510L420 369C431 351 449 337 471 331Z" fill="#A66A2B"/>
+  <path d="M453 616H548" stroke="#253C34" stroke-width="16" stroke-linecap="round"/>
+  <path d="M490 376C505 383 528 381 542 371" stroke="#F6E6D8" stroke-width="10" stroke-linecap="round"/>
+  <text x="480" y="1134" text-anchor="middle" fill="#253C34" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="800">Side posture</text>
+</svg>

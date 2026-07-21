@@ -1,0 +1,10 @@
+<svg width="960" height="1200" viewBox="0 0 960 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="1200" rx="56" fill="#F3F0ED"/>
+  <rect x="120" y="92" width="720" height="1016" rx="40" fill="#FAF9F7"/>
+  <path d="M170 1040H790" stroke="#D9D3CC" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="480" cy="248" r="76" fill="#253C34"/>
+  <path d="M383 361C407 333 445 318 480 318C515 318 553 333 577 361L631 546C640 576 621 608 590 613L556 618L592 979C596 1019 565 1054 525 1054H435C395 1054 364 1019 368 979L404 618L370 613C339 608 320 576 329 546L383 361Z" fill="#94B6A6"/>
+  <path d="M420 618H540" stroke="#253C34" stroke-width="16" stroke-linecap="round"/>
+  <path d="M452 379C468 389 493 389 509 379" stroke="#E9F2EB" stroke-width="10" stroke-linecap="round"/>
+  <text x="480" y="1134" text-anchor="middle" fill="#253C34" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="800">Front baseline</text>
+</svg>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { Surface } from "@/app/components/ui/Layout";
 import {
   ALLOWED_IMAGE_TYPES,
   FormSection,
@@ -86,7 +87,7 @@ export default function CheckInForm() {
 
   return (
     <form action={handleSubmit} className="mt-8 space-y-8">
-      <section className="rounded-[2rem] border border-border bg-surface p-5 shadow-sm sm:p-6">
+      <Surface>
         <h2 className="text-xl font-semibold">Progress photos</h2>
         <p className="mt-2 text-sm text-muted">
           Required weekly front, side, and back photos. Use similar lighting and
@@ -106,7 +107,7 @@ export default function CheckInForm() {
             {photoError}
           </p>
         )}
-      </section>
+      </Surface>
 
       <FormSection
         title="Weekly measurements"

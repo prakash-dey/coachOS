@@ -4,8 +4,10 @@ import InviteClient from "./InviteClient";
 import { createClient } from "@/lib/supabase/server";
 import { previewDemoClient } from "@/app/demo/actions";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { Badge, Card } from "@/app/components/ui/Layout";
 import ClientLifecycleActions from "./ClientLifecycleActions";
 import IntakePhotoGallery from "./IntakePhotoGallery";
+import { demoIntakePhotos } from "@/lib/demo-assets";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -107,19 +109,21 @@ export default async function ClientDetailPage({
       ]
     : [];
 
-  const photoUrls = await Promise.all(
-    photoPaths.map(async (photo) => {
-      const { data, error } = await supabase.storage
-        .from("client-onboarding-photos")
-        .createSignedUrl(photo.path, 60 * 10);
+  const photoUrls = workspace.is_demo
+    ? demoIntakePhotos
+    : await Promise.all(
+        photoPaths.map(async (photo) => {
+          const { data, error } = await supabase.storage
+            .from("client-onboarding-photos")
+            .createSignedUrl(photo.path, 60 * 10);
 
-      return {
-        ...photo,
-        url: data?.signedUrl ?? null,
-        error: error?.message ?? null,
-      };
-    }),
-  );
+          return {
+            ...photo,
+            url: data?.signedUrl ?? null,
+            error: error?.message ?? null,
+          };
+        }),
+      );
 
   const createdDate = new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
@@ -147,23 +151,36 @@ export default async function ClientDetailPage({
   ].sort((a, b) => b.startsOn.localeCompare(a.startsOn));
 
   return (
-    <main className="min-h-screen px-6 py-10">
-      <section className="mx-auto max-w-6xl">
-        <Link href="/clients" className="text-sm text-gray-600">
+    <main className="min-h-screen px-4 py-7 sm:px-6 lg:px-10 lg:py-10">
+      <section className="mx-auto max-w-7xl">
+        <Link href="/clients" className="text-sm font-semibold text-muted transition hover:text-brand">
           ← Clients
         </Link>
 
-        <header className="mt-6 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold">
-              {client.first_name} {client.last_name}
-            </h1>
+        <header className="mt-6 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div className="flex items-start gap-6">
+            <div className="grid size-24 shrink-0 place-items-center rounded-2xl border-4 border-white bg-brand-strong text-3xl font-bold text-white shadow-card md:size-32">
+              {client.first_name[0]}{client.last_name[0]}
+            </div>
+            <div className="pt-1 md:pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
+                  {client.first_name} {client.last_name}
+                </h1>
+                <Badge tone={client.status === "active" ? "success" : client.status === "paused" ? "warning" : "neutral"}>
+                  {client.status} client
+                </Badge>
+              </div>
 
-            <p className="mt-2 text-sm capitalize text-gray-600">
-              {client.status} client
-            </p>
+              <p className="mt-2 text-muted">
+                Member since {createdDate} • {client.timezone}
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                {client.email ?? "Email pending"}{client.phone ? ` · ${client.phone}` : ""}
+              </p>
+            </div>
           </div>
-          <div className="flex justify-between gap-2.5">
+          <div className="flex flex-wrap gap-2.5">
             {workspace.is_demo && (
               <form action={previewClient}>
                 <Button type="submit" size="sm">Preview as client</Button>
@@ -174,43 +191,29 @@ export default async function ClientDetailPage({
           </div>
         </header>
 
-        <div className="mt-8 overflow-hidden rounded-lg border border-gray-200">
-          <dl className="divide-y divide-gray-200">
-            <div className="grid gap-1 p-4 sm:grid-cols-3">
-              <dt className="text-sm font-medium text-gray-600">Email</dt>
-              <dd className="sm:col-span-2">
-                {client.email ?? "Not provided"}
-              </dd>
-            </div>
+        <dl className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ["Email", client.email ?? "Not provided"],
+            ["Phone", client.phone ?? "Not provided"],
+            ["Timezone", client.timezone],
+            ["Added", createdDate],
+          ].map(([label, value]) => (
+            <Card key={label} className="p-5">
+              <dt className="text-xs font-bold uppercase tracking-[0.14em] text-muted">{label}</dt>
+              <dd className="mt-2 truncate font-semibold">{value}</dd>
+            </Card>
+          ))}
+        </dl>
 
-            <div className="grid gap-1 p-4 sm:grid-cols-3">
-              <dt className="text-sm font-medium text-gray-600">Phone</dt>
-              <dd className="sm:col-span-2">
-                {client.phone ?? "Not provided"}
-              </dd>
-            </div>
-
-            <div className="grid gap-1 p-4 sm:grid-cols-3">
-              <dt className="text-sm font-medium text-gray-600">Timezone</dt>
-              <dd className="sm:col-span-2">{client.timezone}</dd>
-            </div>
-
-            <div className="grid gap-1 p-4 sm:grid-cols-3">
-              <dt className="text-sm font-medium text-gray-600">Added</dt>
-              <dd className="sm:col-span-2">{createdDate}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <section className="mt-8 overflow-hidden rounded-[2rem] border border-border bg-surface shadow-sm">
-          <div className="border-b border-border bg-background/70 p-6">
+        <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+          <div className="border-b border-border bg-surface p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Client intake</p>
-                <h2 className="mt-1 text-2xl font-semibold">Baseline dashboard</h2>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-warm">Client intake</p>
+                <h2 className="mt-1 text-2xl font-bold tracking-[-0.03em]">Baseline dashboard</h2>
               </div>
               {intake?.submitted_at && (
-                <span className="rounded-full bg-[#e4f4de] px-3 py-1 text-sm font-semibold text-brand">
+                <span className="rounded-full bg-brand-soft px-3 py-1 text-sm font-bold text-brand-soft-text">
                   Submitted {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(intake.submitted_at))}
                 </span>
               )}
@@ -225,7 +228,7 @@ export default async function ClientDetailPage({
           ) : intake ? (
             <div className="space-y-6">
               <div className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-                <div className="rounded-[1.5rem] border border-border bg-background p-4">
+                <div className="rounded-2xl border border-border bg-surface-muted p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <h3 className="text-lg font-semibold">Progress photos</h3>
@@ -241,20 +244,20 @@ export default async function ClientDetailPage({
                 </div>
 
                 <div className="grid gap-4">
-                  <article className="rounded-3xl border border-success-soft bg-success-soft p-5">
-                    <p className="text-xs font-bold uppercase tracking-[.16em] text-brand">Primary goal</p>
+                  <article className="rounded-2xl bg-brand-strong p-6 text-white shadow-card">
+                    <p className="text-xs font-bold uppercase tracking-[.16em] text-white/55">Primary goal</p>
                     <p className="mt-3 text-2xl font-semibold leading-tight">{intake.primary_goal}</p>
                   </article>
                   <div className="grid grid-cols-3 gap-3">
-                    <article className="rounded-2xl border border-border bg-background p-4">
+                    <article className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
                       <p className="text-xs text-muted">Experience</p>
                       <p className="mt-1 font-semibold capitalize">{humanize(intake.training_experience)}</p>
                     </article>
-                    <article className="rounded-2xl border border-border bg-background p-4">
+                    <article className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
                       <p className="text-xs text-muted">Activity</p>
                       <p className="mt-1 font-semibold capitalize">{humanize(intake.activity_level)}</p>
                     </article>
-                    <article className="rounded-2xl border border-border bg-background p-4">
+                    <article className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
                       <p className="text-xs text-muted">Training</p>
                       <p className="mt-1 font-semibold">{intake.training_days_per_week} days/wk</p>
                     </article>
@@ -263,7 +266,7 @@ export default async function ClientDetailPage({
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[.9fr_1.1fr]">
-                <article className="rounded-[1.5rem] border border-border bg-background p-5">
+                <article className="rounded-2xl bg-brand-strong p-6 text-white shadow-card">
                   <h3 className="font-semibold">Measurements</h3>
                   <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-2">
                     {[
@@ -275,8 +278,8 @@ export default async function ClientDetailPage({
                       ["Thigh", unitValue(intake.thigh_cm, "cm")],
                       ["Arm", unitValue(intake.arm_cm, "cm")],
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-2xl bg-surface p-4">
-                        <dt className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</dt>
+                      <div key={label} className="rounded-xl bg-white/10 p-4">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-white/55">{label}</dt>
                         <dd className="mt-1 text-xl font-semibold">{value}</dd>
                       </div>
                     ))}
@@ -284,33 +287,33 @@ export default async function ClientDetailPage({
                 </article>
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                  <article className="rounded-[1.5rem] border border-border bg-background p-5">
+                  <article className="rounded-2xl border border-border bg-surface p-6 shadow-card">
                     <h3 className="font-semibold">Nutrition and lifestyle</h3>
                     <dl className="mt-4 space-y-4 text-sm">
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Food habits</dt><dd className="mt-1 leading-6">{intake.usual_food_habits}</dd></div>
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Dietary preference</dt><dd className="mt-1 font-medium">{intake.dietary_preference}</dd></div>
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Allergies</dt><dd className="mt-1 font-medium">{intake.allergies}</dd></div>
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-2xl bg-surface p-3"><dt className="text-xs text-muted">Sleep</dt><dd className="mt-1 font-semibold">{unitValue(intake.sleep_hours, "hrs")}</dd></div>
-                        <div className="rounded-2xl bg-surface p-3"><dt className="text-xs text-muted">Stress</dt><dd className="mt-1 font-semibold">{intake.stress_level ? `${intake.stress_level}/5` : "—"}</dd></div>
+                        <div className="rounded-2xl bg-surface-muted p-3"><dt className="text-xs text-muted">Sleep</dt><dd className="mt-1 font-semibold">{unitValue(intake.sleep_hours, "hrs")}</dd></div>
+                        <div className="rounded-2xl bg-surface-muted p-3"><dt className="text-xs text-muted">Stress</dt><dd className="mt-1 font-semibold">{intake.stress_level ? `${intake.stress_level}/5` : "—"}</dd></div>
                       </div>
                     </dl>
                   </article>
 
-                  <article className="rounded-[1.5rem] border border-border bg-background p-5">
-                    <h3 className="font-semibold">Health and safety</h3>
+                  <article className="rounded-2xl border border-red-100 bg-surface p-6 shadow-card">
+                    <h3 className="font-semibold text-red-700">Medical & emergency</h3>
                     <dl className="mt-4 space-y-4 text-sm">
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Medical history</dt><dd className="mt-1 leading-6">{intake.medical_history}</dd></div>
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Injuries / limitations</dt><dd className="mt-1 leading-6">{intake.injuries_or_limitations}</dd></div>
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Medications</dt><dd className="mt-1 font-medium">{intake.medications ?? "—"}</dd></div>
-                      <div className="rounded-2xl bg-surface p-3"><dt className="text-xs text-muted">Emergency contact</dt><dd className="mt-1 font-semibold">{intake.emergency_contact_name} · {intake.emergency_contact_phone}</dd></div>
+                      <div className="rounded-2xl border border-border bg-surface-muted p-3"><dt className="text-xs text-muted">Emergency contact</dt><dd className="mt-1 font-semibold">{intake.emergency_contact_name} · {intake.emergency_contact_phone}</dd></div>
                     </dl>
                   </article>
                 </div>
               </div>
 
               {intake.notes && (
-                <article className="rounded-[1.5rem] border border-border bg-background p-5">
+                <article className="rounded-2xl border border-border bg-surface-muted p-5">
                   <h3 className="font-semibold">Coach notes from intake</h3>
                   <p className="mt-2 text-sm leading-6 text-muted">{intake.notes}</p>
                 </article>
@@ -326,8 +329,8 @@ export default async function ClientDetailPage({
         <section className="mt-8">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Course access</p>
-              <h2 className="mt-1 text-2xl font-semibold">Subscribed plans</h2>
+              <p className="text-xs font-bold uppercase tracking-[.18em] text-warm">Course access</p>
+              <h2 className="mt-1 text-2xl font-bold tracking-[-0.03em]">Subscribed plans</h2>
             </div>
             <span className="rounded-full bg-background px-3 py-1 text-xs font-bold text-muted">{courseAccess.length} total</span>
           </div>
@@ -335,7 +338,7 @@ export default async function ClientDetailPage({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {courseAccess.map((course) => {
                 const expired = Boolean(course.endsOn && course.endsOn < new Date().toISOString().slice(0, 10));
-                return <article key={`${course.type}-${course.id}`} className="rounded-[1.5rem] border border-border bg-surface p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-muted">{course.type}</p><h3 className="mt-1 font-semibold">{course.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${expired ? "bg-red-50 text-red-700" : "bg-[#e4f4de] text-brand"}`}>{expired ? "Expired" : course.status}</span></div><dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-muted">Access period</dt><dd className="mt-1 font-medium">{course.durationWeeks ?? "—"} weeks</dd></div><div><dt className="text-xs text-muted">Ends</dt><dd className="mt-1 font-medium">{course.endsOn ?? "No expiry"}</dd></div></dl></article>;
+                return <article key={`${course.type}-${course.id}`} className={`rounded-2xl border bg-surface p-6 shadow-card ${course.type === "Workout" ? "border-brand" : "border-warm"}`}><div className="flex items-start justify-between gap-3"><div><p className={`w-fit rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${course.type === "Workout" ? "bg-brand-soft text-brand-soft-text" : "bg-warm-soft text-warm"}`}>{course.type}</p><h3 className="mt-3 font-bold">{course.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${expired ? "bg-red-50 text-red-700" : "bg-brand-soft text-brand-soft-text"}`}>{expired ? "Expired" : course.status}</span></div><dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-muted">Access period</dt><dd className="mt-1 font-medium">{course.durationWeeks ?? "—"} weeks</dd></div><div><dt className="text-xs text-muted">Ends</dt><dd className="mt-1 font-medium">{course.endsOn ?? "No expiry"}</dd></div></dl></article>;
               })}
             </div>
           ) : <div className="mt-4 rounded-[1.5rem] border border-dashed border-border bg-surface p-6 text-sm text-muted">No workout or nutrition plans have been assigned yet.</div>}

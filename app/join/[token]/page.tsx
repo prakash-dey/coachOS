@@ -6,6 +6,7 @@ import { Alert } from "@/app/components/ui/Feedback";
 import { Field, Input } from "@/app/components/ui/FormControls";
 import { GoogleIcon } from "@/app/components/ui/GoogleIcon";
 import { BrandLink } from "@/app/components/ui/Brand";
+import { Card } from "@/app/components/ui/Layout";
 
 import { acceptInvitation, continueWithEmailForInvitation, signInWithGoogleForInvitation } from "./actions";
 
@@ -85,19 +86,20 @@ export default async function JoinPage({
   }).format(new Date(invitation.invitation_expires_at));
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <section className="w-full max-w-md">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12">
+      <div aria-hidden="true" className="absolute -left-24 top-0 size-96 rounded-full bg-brand-soft/35 blur-3xl" />
+      <Card className="relative w-full max-w-md p-7 sm:p-9">
         <BrandLink />
 
-        <h1 className="mt-8 text-3xl font-semibold">
+        <h1 className="mt-8 text-3xl font-bold tracking-[-0.04em]">
           You’re invited, {invitation.client_first_name}
         </h1>
 
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-muted">
           Join {invitation.workspace_name} as a coaching client.
         </p>
 
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-muted">
           This invitation expires {expiresAt}.
         </p>
 
@@ -110,7 +112,7 @@ export default async function JoinPage({
 
         {user ? (
           <div className="mt-8">
-            <p className="text-sm text-gray-600">Signed in as {user.email}</p>
+            <p className="text-sm text-muted">Signed in as {user.email}</p>
 
             <form action={acceptCurrentInvitation} className="mt-4">
               <Button type="submit" className="w-full">Accept invitation</Button>
@@ -118,17 +120,17 @@ export default async function JoinPage({
           </div>
         ) : (
           <div className="mt-8">
-            <p className="text-sm leading-6 text-gray-600">
+            <p className="text-sm leading-6 text-muted">
               Use the account you want for CoachOS. It does not need to match the email your coach typed while creating the invite.
             </p>
             <form action={signInForInvitation} className="mt-4">
               <Button type="submit" variant="secondary" className="w-full"><GoogleIcon />Continue with Google</Button>
             </form>
 
-            <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[.18em] text-gray-400">
-              <span className="h-px flex-1 bg-gray-200" />
+            <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[.18em] text-muted">
+              <span className="h-px flex-1 bg-border" />
               or
-              <span className="h-px flex-1 bg-gray-200" />
+              <span className="h-px flex-1 bg-border" />
             </div>
 
             <form action={continueWithEmail} className="space-y-4">
@@ -157,7 +159,7 @@ export default async function JoinPage({
             </form>
           </div>
         )}
-      </section>
+      </Card>
     </main>
   );
 }
