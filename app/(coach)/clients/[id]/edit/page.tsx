@@ -63,7 +63,7 @@ export default async function EditClientPage({
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select(
-      "id, first_name, last_name, email, phone, timezone, status",
+      "id, first_name, last_name, email, phone, gender, timezone, status",
     )
     .eq("id", id)
     .eq("workspace_id", workspace.id)
@@ -145,6 +145,19 @@ export default async function EditClientPage({
               defaultValue={client.phone ?? ""}
               maxLength={32}
             />
+          </Field>
+
+          <Field
+            label="Gender"
+            htmlFor="gender"
+            hint="Controls the reference photos clients see during onboarding and weekly check-ins."
+            required
+          >
+            <Select id="gender" name="gender" defaultValue={client.gender ?? "other"} required>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </Select>
           </Field>
 
           <Field label="Timezone" htmlFor="timezone">

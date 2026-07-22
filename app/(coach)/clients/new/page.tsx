@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
-import { Field, Input } from "@/app/components/ui/FormControls";
+import { Field, Input, Select } from "@/app/components/ui/FormControls";
 import { Card } from "@/app/components/ui/Layout";
 
 import { createNewClient } from "./actions";
@@ -105,6 +105,19 @@ export default async function NewClientPage({
               autoComplete="tel"
               maxLength={32}
             />
+          </Field>
+
+          <Field
+            label="Gender"
+            htmlFor="gender"
+            hint="Used only to show the right front, side, and back photo examples."
+            required
+          >
+            <Select id="gender" name="gender" defaultValue="other" required>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </Select>
           </Field>
 
           <div className="flex items-center gap-3">

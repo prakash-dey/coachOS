@@ -7,7 +7,8 @@ import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { Badge, Card } from "@/app/components/ui/Layout";
 import ClientLifecycleActions from "./ClientLifecycleActions";
 import IntakePhotoGallery from "./IntakePhotoGallery";
-import { demoIntakePhotos, publicDemoPhotoUrl } from "@/lib/demo-assets";
+import { demoIntakePhotosForGender, publicDemoPhotoUrl } from "@/lib/demo-assets";
+import { genderPhotoSet } from "@/lib/client-gender";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -34,15 +35,12 @@ function tableIsMissing(error: { code?: string; message?: string } | null) {
     error.message?.toLowerCase().includes("could not find the table");
 }
 
-function createDemoIntake(client: { first_name: string; last_name: string; created_at: string }) {
+function createDemoIntake(client: { first_name: string; last_name: string; gender: string | null; created_at: string }) {
   const seed = Array.from(`${client.first_name}${client.last_name}`).reduce(
     (total, character) => total + character.charCodeAt(0),
     0,
   );
-  const isFemaleDemo =
-    ["Sara", "Maya", "Nisha", "Isha", "Tara", "Leena", "Ananya", "Meera", "Zoya", "Diya"].includes(
-      client.first_name,
-    );
+  const photos = genderPhotoSet(client.gender);
 
   return {
     submitted_at: client.created_at,
@@ -87,9 +85,9 @@ function createDemoIntake(client: { first_name: string; last_name: string; creat
     stress_level: 1 + (seed % 5),
     emergency_contact_name: "Demo emergency contact",
     emergency_contact_phone: `+91 99888 ${String(seed % 100000).padStart(5, "0")}`,
-    front_photo_path: isFemaleDemo ? "images/female_front_view.png" : "images/male_front_view.png",
-    side_photo_path: isFemaleDemo ? "images/female_side_view.png" : "images/male_side_view.png",
-    back_photo_path: isFemaleDemo ? "images/female_back_view.png" : "images/male_back_view.png",
+    front_photo_path: photos.front,
+    side_photo_path: photos.side,
+    back_photo_path: photos.back,
     notes: "Generated demo intake for UI preview and testing.",
   };
 }
@@ -134,7 +132,7 @@ export default async function ClientDetailPage({
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select(
-      "id, first_name, last_name, email, phone, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(name, duration_weeks))",
+      "id, first_name, last_name, email, phone, gender, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(name, duration_weeks))",
     )
     .eq("id", id)
     .eq("workspace_id", workspace.id)
@@ -177,7 +175,7 @@ export default async function ClientDetailPage({
         error: null,
       }))
     : workspace.is_demo
-      ? demoIntakePhotos
+      ? demoIntakePhotosForGender(client.gender)
     : await Promise.all(
         photoPaths.map(async (photo) => {
           const { data, error } = await supabase.storage

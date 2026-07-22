@@ -130,7 +130,7 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
             <label className="flex h-10 w-72 items-center gap-2 rounded-full bg-surface-subtle px-4 text-sm text-muted transition focus-within:ring-2 focus-within:ring-brand/15">
               <SearchIcon className="h-5 w-5" />
               <span className="sr-only">Search clients</span>
-              <input className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-sm outline-none placeholder:text-muted/70 focus:border-transparent focus:outline-none focus:ring-0 focus-visible:outline-none" placeholder="Search clients..." />
+              <input style={{outline:"none"}} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-sm outline-none placeholder:text-muted/70 focus:border-transparent focus:outline-none focus:ring-0 focus-visible:outline-none" placeholder="Search clients..." />
             </label>
             <Link href="/notifications" aria-label="Notifications" title="Notifications" className="grid size-10 place-items-center rounded-full text-foreground transition hover:bg-surface-subtle">
               <BellIcon className="h-5 w-5" />

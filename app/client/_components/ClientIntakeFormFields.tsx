@@ -1,10 +1,12 @@
 "use client";
 
 import { type ReactNode } from "react";
+import Image from "next/image";
 import imageCompression from "browser-image-compression";
 
 import { Input, Select, Textarea } from "@/app/components/ui/FormControls";
 import { ui } from "@/app/components/ui/design-system";
+import { genderPhotoSet } from "@/lib/client-gender";
 
 export const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -321,15 +323,34 @@ export function SelectField({
 
 export function PhotoUploadField({
   guide,
+  gender,
   disabled,
 }: Readonly<{
   guide: PhotoGuide;
+  gender: string | null;
   disabled: boolean;
 }>) {
+  const photos = genderPhotoSet(gender);
+  const referenceSrc =
+    guide.field === "frontPhoto"
+      ? `/${photos.front}`
+      : guide.field === "sidePhoto"
+        ? `/${photos.side}`
+        : `/${photos.back}`;
+
   return (
-    <div className="flex min-h-[320px] flex-col rounded-2xl border border-border bg-background p-4">
-      <div className="flex h-36 shrink-0 items-center justify-center">
-        <PhotoGuideIllustration type={guide.field} />
+    <div className="flex min-h-[300px] flex-col rounded-2xl border border-border bg-background p-4">
+      <div className="relative h-32 shrink-0 overflow-hidden rounded-xl border border-border bg-surface">
+        <Image
+          src={referenceSrc}
+          alt={`${guide.title} reference pose`}
+          fill
+          sizes="(min-width: 768px) 30vw, 100vw"
+          className="object-cover"
+        />
+        <span className="absolute bottom-2 left-2 rounded-full bg-black/55 px-2.5 py-1 text-xs font-bold text-white">
+          Example
+        </span>
       </div>
 
       <div className="mt-3 flex flex-1 flex-col justify-between">

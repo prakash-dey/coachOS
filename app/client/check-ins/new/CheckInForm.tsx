@@ -19,7 +19,11 @@ import {
 
 import { submitCheckIn } from "./actions";
 
-export default function CheckInForm() {
+export default function CheckInForm({
+  gender,
+}: Readonly<{
+  gender: string | null;
+}>) {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -98,6 +102,7 @@ export default function CheckInForm() {
             <PhotoUploadField
               key={guide.field}
               guide={guide}
+              gender={gender}
               disabled={isSubmitting}
             />
           ))}

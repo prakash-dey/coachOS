@@ -43,7 +43,7 @@ export default async function ClientOnboardingPage({
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
-    .select("id, first_name")
+    .select("id, first_name, gender")
     .eq("workspace_id", membership.workspace_id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -96,7 +96,7 @@ export default async function ClientOnboardingPage({
           <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
 
-        <ClientOnboardingForm />
+        <ClientOnboardingForm gender={client.gender ?? "other"} />
       </section>
     </main>
   );

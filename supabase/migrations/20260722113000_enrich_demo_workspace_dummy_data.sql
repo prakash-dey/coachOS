@@ -166,9 +166,9 @@ begin
       1 + (client_number % 5),
       'Demo emergency contact',
       '+91 99888 ' || lpad(client_number::text, 5, '0'),
-      case when client_number % 2 = 0 then 'images/female_front_view.png' else 'images/male_front_view.png' end,
-      case when client_number % 2 = 0 then 'images/female_side_view.png' else 'images/male_side_view.png' end,
-      case when client_number % 2 = 0 then 'images/female_back_view.png' else 'images/male_back_view.png' end,
+      case when client_number % 2 = 0 then 'images/female_front_view.webp' else 'images/male_front_view.webp' end,
+      case when client_number % 2 = 0 then 'images/female_side_view.webp' else 'images/male_side_view.webp' end,
+      case when client_number % 2 = 0 then 'images/female_back_view.webp' else 'images/male_back_view.webp' end,
       'Generated demo intake for UI preview and testing.'
     )
     on conflict (workspace_id, client_id) do update
@@ -207,9 +207,9 @@ begin
       hip_cm = coalesce(hip_cm, 86 + (client_number % 14)),
       thigh_cm = coalesce(thigh_cm, 48 + (client_number % 10)),
       arm_cm = coalesce(arm_cm, 27 + (client_number % 8)),
-      front_photo_path = case when client_number % 2 = 0 then 'images/female_front_view.png' else 'images/male_front_view.png' end,
-      side_photo_path = case when client_number % 2 = 0 then 'images/female_side_view.png' else 'images/male_side_view.png' end,
-      back_photo_path = case when client_number % 2 = 0 then 'images/female_back_view.png' else 'images/male_back_view.png' end
+      front_photo_path = case when client_number % 2 = 0 then 'images/female_front_view.webp' else 'images/male_front_view.webp' end,
+      side_photo_path = case when client_number % 2 = 0 then 'images/female_side_view.webp' else 'images/male_side_view.webp' end,
+      back_photo_path = case when client_number % 2 = 0 then 'images/female_back_view.webp' else 'images/male_back_view.webp' end
     where workspace_id = target_workspace_id
       and client_id = client_record.id;
   end loop;
@@ -372,9 +372,9 @@ begin
             then 'Good awareness this week. Keep the next action simple and repeatable.'
           else null
         end,
-        case when client_index % 2 = 0 then 'images/female_front_view.png' else 'images/male_front_view.png' end,
-        case when client_index % 2 = 0 then 'images/female_side_view.png' else 'images/male_side_view.png' end,
-        case when client_index % 2 = 0 then 'images/female_back_view.png' else 'images/male_back_view.png' end,
+        case when client_index % 2 = 0 then 'images/female_front_view.webp' else 'images/male_front_view.webp' end,
+        case when client_index % 2 = 0 then 'images/female_side_view.webp' else 'images/male_side_view.webp' end,
+        case when client_index % 2 = 0 then 'images/female_back_view.webp' else 'images/male_back_view.webp' end,
         case
           when week_index > 0 or client_index <= 8 then now() - (week_index * interval '7 days')
           else null

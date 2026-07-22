@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { normalizeClientGender } from "@/lib/client-gender";
 
 export async function updateClient(
   clientId: string,
@@ -27,6 +28,7 @@ export async function updateClient(
   const lastName = getTextValue("lastName");
   const email = getTextValue("email").toLowerCase();
   const phone = getTextValue("phone");
+  const gender = normalizeClientGender(getTextValue("gender"));
   const timezone = getTextValue("timezone");
   const status = getTextValue("status");
 
@@ -91,6 +93,7 @@ export async function updateClient(
       last_name: lastName,
       email: email || null,
       phone: phone || null,
+      gender,
       timezone,
       status,
     })
