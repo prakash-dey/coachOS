@@ -1,0 +1,17 @@
+name: Main PR source guard
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  only-staging-to-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR source is staging
+        run: |
+          if [ "${{ github.head_ref }}" != "staging" ]; then
+            echo "Only staging can be merged into main."
+            exit 1
+          fi
