@@ -60,7 +60,7 @@ export async function createNewClient(formData: FormData) {
 
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
-    .select("id")
+    .select("id, is_demo, approval_status")
     .eq("owner_id", user.id)
     .maybeSingle();
 
@@ -70,6 +70,10 @@ export async function createNewClient(formData: FormData) {
 
   if (!workspace) {
     redirect("/onboarding");
+  }
+
+  if (!workspace.is_demo && workspace.approval_status !== "approved") {
+    redirect("/clients/new?error=approval_pending");
   }
 
   const insertPayload = {
