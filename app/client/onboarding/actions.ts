@@ -4,9 +4,24 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { normalizeClientGender } from "@/lib/client-gender";
 
 const PHOTO_BUCKET = "client-onboarding-photos";
+const DOCUMENT_BUCKET = "client-onboarding-documents";
 const MAX_PHOTO_SIZE = 900 * 1024;
+const MAX_PDF_SIZE = 5 * 1024 * 1024;
+
+export type ClientOnboardingActionResult = {
+  status: "error";
+  message: string;
+};
+
+const onboardingErrors = {
+  invalidInput: "Check the required fields, photos, and medical reports, then try again.",
+  profileError: "We could not load your client profile.",
+  uploadFailed: "We could not upload your photos or medical reports. Please check the files and try again.",
+  submitFailed: "We could not save your onboarding details. Please try again.",
+} as const;
 
 function text(formData: FormData, field: string) {
   const value = formData.get(field);
@@ -45,7 +60,49 @@ function photoIsValid(photo: FormDataEntryValue | null) {
     photo.type === "image/webp";
 }
 
-export async function submitClientOnboarding(formData: FormData) {
+async function pdfIsValid(pdf: FormDataEntryValue | null) {
+  if (!(pdf instanceof File) || pdf.size === 0) {
+    return true;
+  }
+
+  if (!(pdf instanceof File) || pdf.size <= 0 || pdf.size > MAX_PDF_SIZE) {
+    return false;
+  }
+
+  if (pdf.type !== "application/pdf" || !pdf.name.toLowerCase().endsWith(".pdf")) {
+    return false;
+  }
+
+  const bytes = new Uint8Array(await pdf.arrayBuffer());
+  const header = new TextDecoder("latin1").decode(bytes.slice(0, 8));
+
+  if (!header.startsWith("%PDF-")) {
+    return false;
+  }
+
+  const content = new TextDecoder("latin1").decode(bytes).toLowerCase();
+  const activeContentMarkers = [
+    "/javascript",
+    "/js",
+    "/openaction",
+    "/aa",
+    "/launch",
+    "/embeddedfile",
+    "/xfa",
+    "/richmedia",
+    "/submitform",
+    "/importdata",
+  ];
+
+  return !activeContentMarkers.some((marker) => content.includes(marker));
+}
+
+export async function submitClientOnboarding(
+  formData: FormData,
+): Promise<ClientOnboardingActionResult> {
+  const firstName = text(formData, "firstName");
+  const lastName = text(formData, "lastName");
+  const gender = normalizeClientGender(text(formData, "gender"));
   const primaryGoal = text(formData, "primaryGoal");
   const trainingExperience = text(formData, "trainingExperience");
   const activityLevel = text(formData, "activityLevel");
@@ -71,8 +128,12 @@ export async function submitClientOnboarding(formData: FormData) {
   const frontPhoto = formData.get("frontPhoto");
   const sidePhoto = formData.get("sidePhoto");
   const backPhoto = formData.get("backPhoto");
+  const onboardingPdf = formData.get("onboardingPdf");
 
   const validationFailed =
+    !textLengthIsValid(firstName, 1, 100) ||
+    !textLengthIsValid(lastName, 1, 100) ||
+    !["male", "female", "other"].includes(gender) ||
     !textLengthIsValid(primaryGoal, 3, 500) ||
     !["beginner", "intermediate", "advanced"].includes(trainingExperience) ||
     !["sedentary", "light", "moderate", "very_active"].includes(activityLevel) ||
@@ -106,10 +167,11 @@ export async function submitClientOnboarding(formData: FormData) {
     !optionalTextLengthIsValid(notes, 2, 1500) ||
     !photoIsValid(frontPhoto) ||
     !photoIsValid(sidePhoto) ||
-    !photoIsValid(backPhoto);
+    !photoIsValid(backPhoto) ||
+    !(await pdfIsValid(onboardingPdf));
 
   if (validationFailed) {
-    redirect("/client/onboarding?error=invalid_input");
+    return { status: "error", message: onboardingErrors.invalidInput };
   }
 
   const supabase = await createClient();
@@ -146,7 +208,7 @@ export async function submitClientOnboarding(formData: FormData) {
     .maybeSingle();
 
   if (clientError || !client) {
-    redirect("/client/onboarding?error=profile_error");
+    return { status: "error", message: onboardingErrors.profileError };
   }
 
   const { data: existingIntake, error: existingIntakeError } = await supabase
@@ -157,7 +219,7 @@ export async function submitClientOnboarding(formData: FormData) {
     .maybeSingle();
 
   if (existingIntakeError) {
-    redirect("/client/onboarding?error=submit_failed");
+    return { status: "error", message: onboardingErrors.submitFailed };
   }
 
   if (existingIntake) {
@@ -169,10 +231,19 @@ export async function submitClientOnboarding(formData: FormData) {
     side: `${membership.workspace_id}/${user.id}/${client.id}/side.webp`,
     back: `${membership.workspace_id}/${user.id}/${client.id}/back.webp`,
   };
+  const hasMedicalReport = onboardingPdf instanceof File && onboardingPdf.size > 0;
+  const documentPath = hasMedicalReport
+    ? `${membership.workspace_id}/${user.id}/${client.id}/medical-report.pdf`
+    : null;
 
   await supabase.storage
     .from(PHOTO_BUCKET)
     .remove(Object.values(photoPaths));
+  if (documentPath) {
+    await supabase.storage
+      .from(DOCUMENT_BUCKET)
+      .remove([documentPath]);
+  }
 
   const uploads = [
     { path: photoPaths.front, file: frontPhoto },
@@ -182,14 +253,14 @@ export async function submitClientOnboarding(formData: FormData) {
 
   for (const upload of uploads) {
     if (!(upload.file instanceof File)) {
-      redirect("/client/onboarding?error=invalid_input");
+      return { status: "error", message: onboardingErrors.invalidInput };
     }
 
     const { error: uploadError } = await supabase.storage
       .from(PHOTO_BUCKET)
       .upload(upload.path, upload.file, {
         contentType: "image/webp",
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) {
@@ -197,8 +268,52 @@ export async function submitClientOnboarding(formData: FormData) {
         .from(PHOTO_BUCKET)
         .remove(Object.values(photoPaths));
 
-      redirect("/client/onboarding?error=photo_upload_failed");
+      return { status: "error", message: onboardingErrors.uploadFailed };
     }
+  }
+
+  if (documentPath && onboardingPdf instanceof File) {
+    const { error: documentUploadError } = await supabase.storage
+      .from(DOCUMENT_BUCKET)
+      .upload(documentPath, onboardingPdf, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+
+    if (documentUploadError) {
+      await supabase.storage
+        .from(PHOTO_BUCKET)
+        .remove(Object.values(photoPaths));
+      await supabase.storage
+        .from(DOCUMENT_BUCKET)
+        .remove([documentPath]);
+
+      return { status: "error", message: onboardingErrors.uploadFailed };
+    }
+  }
+
+  const { error: clientUpdateError } = await supabase
+    .from("clients")
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      gender,
+    })
+    .eq("id", client.id)
+    .eq("workspace_id", membership.workspace_id)
+    .eq("user_id", user.id);
+
+  if (clientUpdateError) {
+    await supabase.storage
+      .from(PHOTO_BUCKET)
+      .remove(Object.values(photoPaths));
+    if (documentPath) {
+      await supabase.storage
+        .from(DOCUMENT_BUCKET)
+        .remove([documentPath]);
+    }
+
+    return { status: "error", message: onboardingErrors.submitFailed };
   }
 
   const { error: insertError } = await supabase
@@ -231,6 +346,7 @@ export async function submitClientOnboarding(formData: FormData) {
       front_photo_path: photoPaths.front,
       side_photo_path: photoPaths.side,
       back_photo_path: photoPaths.back,
+      document_pdf_path: documentPath,
       notes,
     });
 
@@ -238,8 +354,13 @@ export async function submitClientOnboarding(formData: FormData) {
     await supabase.storage
       .from(PHOTO_BUCKET)
       .remove(Object.values(photoPaths));
+    if (documentPath) {
+      await supabase.storage
+        .from(DOCUMENT_BUCKET)
+        .remove([documentPath]);
+    }
 
-    redirect("/client/onboarding?error=submit_failed");
+    return { status: "error", message: onboardingErrors.submitFailed };
   }
 
   revalidatePath("/client");

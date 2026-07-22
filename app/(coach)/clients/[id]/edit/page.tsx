@@ -19,6 +19,30 @@ type EditClientPageProps = {
   }>;
 };
 
+type EditableClient = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  gender?: string | null;
+  timezone: string;
+  status: string;
+};
+
+function genderColumnIsMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("gender") ||
+    message.includes("schema cache")
+  );
+}
+
 export default async function EditClientPage({
   params,
   searchParams,
@@ -60,7 +84,7 @@ export default async function EditClientPage({
     redirect("/onboarding");
   }
 
-  const { data: client, error: clientError } = await supabase
+  const clientResult = await supabase
     .from("clients")
     .select(
       "id, first_name, last_name, email, phone, gender, timezone, status",
@@ -68,6 +92,22 @@ export default async function EditClientPage({
     .eq("id", id)
     .eq("workspace_id", workspace.id)
     .maybeSingle();
+  let client = clientResult.data as EditableClient | null;
+  let clientError = clientResult.error;
+
+  if (genderColumnIsMissing(clientError)) {
+    const fallbackResult = await supabase
+      .from("clients")
+      .select("id, first_name, last_name, email, phone, timezone, status")
+      .eq("id", id)
+      .eq("workspace_id", workspace.id)
+      .maybeSingle();
+
+    client = fallbackResult.data
+      ? { ...fallbackResult.data, gender: "other" }
+      : null;
+    clientError = fallbackResult.error;
+  }
 
   if (clientError) {
     throw new Error("Unable to load the client.");

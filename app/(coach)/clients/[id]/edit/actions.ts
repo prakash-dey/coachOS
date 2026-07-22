@@ -6,6 +6,19 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeClientGender } from "@/lib/client-gender";
 
+function genderColumnIsMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("gender") ||
+    message.includes("schema cache")
+  );
+}
+
 export async function updateClient(
   clientId: string,
   formData: FormData,
@@ -86,7 +99,7 @@ export async function updateClient(
     redirect("/onboarding");
   }
 
-  const { data: updatedClient, error: updateError } = await supabase
+  const updateResult = await supabase
     .from("clients")
     .update({
       first_name: firstName,
@@ -101,6 +114,28 @@ export async function updateClient(
     .eq("workspace_id", workspace.id)
     .select("id")
     .maybeSingle();
+  let updatedClient = updateResult.data;
+  let updateError = updateResult.error;
+
+  if (genderColumnIsMissing(updateError)) {
+    const fallbackResult = await supabase
+      .from("clients")
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        email: email || null,
+        phone: phone || null,
+        timezone,
+        status,
+      })
+      .eq("id", clientId)
+      .eq("workspace_id", workspace.id)
+      .select("id")
+      .maybeSingle();
+
+    updatedClient = fallbackResult.data;
+    updateError = fallbackResult.error;
+  }
 
   if (updateError || !updatedClient) {
     redirect(`/clients/${clientId}/edit?error=update_failed`);

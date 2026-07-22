@@ -85,7 +85,11 @@ export default function CheckInForm({
     setIsCompressing(false);
 
     startTransition(async () => {
-      await submitCheckIn(formData);
+      const result = await submitCheckIn(formData);
+
+      if (result?.status === "error") {
+        setPhotoError(result.message);
+      }
     });
   }
 

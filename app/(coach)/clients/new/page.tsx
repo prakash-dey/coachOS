@@ -74,7 +74,7 @@ export default async function NewClientPage({
         <Card className="mt-8 p-6 sm:p-8">
         <form action={createNewClient} className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="First name" htmlFor="firstName">
+            <Field label="First name" htmlFor="firstName" required>
               <Input
                 id="firstName"
                 name="firstName"
@@ -85,7 +85,7 @@ export default async function NewClientPage({
               />
             </Field>
 
-            <Field label="Last name" htmlFor="lastName">
+            <Field label="Last name" htmlFor="lastName" required>
               <Input
                 id="lastName"
                 name="lastName"
@@ -97,13 +97,30 @@ export default async function NewClientPage({
             </Field>
           </div>
 
-          <Field label="Phone number" htmlFor="phone">
+          <Field label="Phone number" htmlFor="phone" required>
             <Input
               id="phone"
               name="phone"
               type="tel"
               autoComplete="tel"
+              required
               maxLength={32}
+              placeholder="+91 98765 43210"
+            />
+          </Field>
+
+          <Field
+            label="Email address"
+            htmlFor="email"
+            hint="Optional. The invite link still lets the client join with their preferred email."
+          >
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              maxLength={254}
+              placeholder="client@example.com"
             />
           </Field>
 
