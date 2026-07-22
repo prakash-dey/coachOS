@@ -8,8 +8,10 @@ import {
   ALLOWED_IMAGE_TYPES,
   FormSection,
   MAX_COMPRESSED_PHOTO_SIZE,
+  MAX_ONBOARDING_PDF_SIZE,
   MAX_ORIGINAL_PHOTO_SIZE,
   NumberInputField,
+  PdfUploadField,
   PhotoUploadField,
   SelectField,
   TextareaField,
@@ -19,16 +21,44 @@ import {
 } from "@/app/client/_components/ClientIntakeFormFields";
 
 import { submitClientOnboarding } from "./actions";
+import { normalizeClientGender } from "@/lib/client-gender";
 
-export default function ClientOnboardingForm() {
+export default function ClientOnboardingForm({
+  firstName,
+  lastName,
+  gender,
+}: Readonly<{
+  firstName: string;
+  lastName: string;
+  gender: string | null;
+}>) {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [selectedGender, setSelectedGender] = useState(
+    normalizeClientGender(gender),
+  );
 
   const isSubmitting = isCompressing || isPending;
 
   async function handleSubmit(formData: FormData) {
     setPhotoError(null);
+    const onboardingPdf = formData.get("onboardingPdf");
+
+    if (onboardingPdf instanceof File && onboardingPdf.size > 0) {
+      if (
+        onboardingPdf.type !== "application/pdf" ||
+        !onboardingPdf.name.toLowerCase().endsWith(".pdf")
+      ) {
+        setPhotoError("Upload a valid PDF medical report.");
+        return;
+      }
+
+      if (onboardingPdf.size > MAX_ONBOARDING_PDF_SIZE) {
+        setPhotoError("Medical reports PDF must be 5 MB or smaller.");
+        return;
+      }
+    }
 
     for (const guide of photoGuides) {
       const photo = formData.get(guide.field);
@@ -80,12 +110,62 @@ export default function ClientOnboardingForm() {
     setIsCompressing(false);
 
     startTransition(async () => {
-      await submitClientOnboarding(formData);
+      const result = await submitClientOnboarding(formData);
+
+      if (result?.status === "error") {
+        setPhotoError(result.message);
+      }
     });
   }
 
   return (
     <form action={handleSubmit} className="mt-8 space-y-8">
+      <FormSection
+        title="Identity"
+        description="Confirm the details your coach will see in your profile."
+      >
+        <TextInputField
+          name="firstName"
+          label="First name"
+          minLength={1}
+          maxLength={100}
+          defaultValue={firstName}
+          placeholder="Your first name"
+          required
+        />
+        <TextInputField
+          name="lastName"
+          label="Last name"
+          minLength={1}
+          maxLength={100}
+          defaultValue={lastName}
+          placeholder="Your last name"
+          required
+        />
+        <SelectField
+          name="gender"
+          label="Gender"
+          hint="Used to show the right photo examples."
+          placeholder="Select gender"
+          defaultValue={selectedGender}
+          onChange={(event) =>
+            setSelectedGender(normalizeClientGender(event.currentTarget.value))
+          }
+          required
+          options={[
+            { value: "male", label: "Male" },
+            { value: "female", label: "Female" },
+            { value: "other", label: "Other" },
+          ]}
+        />
+        <PdfUploadField
+          name="onboardingPdf"
+          label="Medical reports"
+          hint="Optional. Upload medical reports, prescriptions, doctor notes, or test results your coach should consider."
+          disabled={isSubmitting}
+        />
+      </FormSection>
+
       <Surface>
         <h2 className="text-xl font-semibold">Baseline photos</h2>
         <p className="mt-2 text-sm text-muted">
@@ -97,6 +177,7 @@ export default function ClientOnboardingForm() {
             <PhotoUploadField
               key={guide.field}
               guide={guide}
+              gender={selectedGender}
               disabled={isSubmitting}
             />
           ))}

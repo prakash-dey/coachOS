@@ -10,6 +10,19 @@ type NewCheckInPageProps = {
   }>;
 };
 
+function genderColumnIsMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("gender") ||
+    message.includes("schema cache")
+  );
+}
+
 export default async function NewCheckInPage({
   searchParams,
 }: NewCheckInPageProps) {
@@ -27,7 +40,7 @@ export default async function NewCheckInPage({
 
   const { data: membership, error: membershipError } = await supabase
     .from("workspace_members")
-    .select("role, status")
+    .select("workspace_id, role, status")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -37,6 +50,33 @@ export default async function NewCheckInPage({
     membership.role !== "client" ||
     membership.status !== "active"
   ) {
+    redirect("/auth/continue");
+  }
+
+  const clientResult = await supabase
+    .from("clients")
+    .select("id, gender")
+    .eq("workspace_id", membership.workspace_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  let client = clientResult.data as { id: string; gender?: string | null } | null;
+  let clientError = clientResult.error;
+
+  if (genderColumnIsMissing(clientError)) {
+    const fallbackResult = await supabase
+      .from("clients")
+      .select("id")
+      .eq("workspace_id", membership.workspace_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    client = fallbackResult.data
+      ? { ...fallbackResult.data, gender: "other" }
+      : null;
+    clientError = fallbackResult.error;
+  }
+
+  if (clientError || !client) {
     redirect("/auth/continue");
   }
 
@@ -71,7 +111,7 @@ export default async function NewCheckInPage({
           <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
 
-        <CheckInForm />
+        <CheckInForm gender={client.gender ?? "other"} />
       </section>
     </main>
   );

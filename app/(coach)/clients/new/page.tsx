@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
-import { Field, Input } from "@/app/components/ui/FormControls";
+import { Field, Input, Select } from "@/app/components/ui/FormControls";
 import { Card } from "@/app/components/ui/Layout";
 
 import { createNewClient } from "./actions";
@@ -74,7 +74,7 @@ export default async function NewClientPage({
         <Card className="mt-8 p-6 sm:p-8">
         <form action={createNewClient} className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="First name" htmlFor="firstName">
+            <Field label="First name" htmlFor="firstName" required>
               <Input
                 id="firstName"
                 name="firstName"
@@ -85,7 +85,7 @@ export default async function NewClientPage({
               />
             </Field>
 
-            <Field label="Last name" htmlFor="lastName">
+            <Field label="Last name" htmlFor="lastName" required>
               <Input
                 id="lastName"
                 name="lastName"
@@ -97,14 +97,44 @@ export default async function NewClientPage({
             </Field>
           </div>
 
-          <Field label="Phone number" htmlFor="phone">
+          <Field label="Phone number" htmlFor="phone" required>
             <Input
               id="phone"
               name="phone"
               type="tel"
               autoComplete="tel"
+              required
               maxLength={32}
+              placeholder="+91 98765 43210"
             />
+          </Field>
+
+          <Field
+            label="Email address"
+            htmlFor="email"
+            hint="Optional. The invite link still lets the client join with their preferred email."
+          >
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              maxLength={254}
+              placeholder="client@example.com"
+            />
+          </Field>
+
+          <Field
+            label="Gender"
+            htmlFor="gender"
+            hint="Used only to show the right front, side, and back photo examples."
+            required
+          >
+            <Select id="gender" name="gender" defaultValue="other" required>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </Select>
           </Field>
 
           <div className="flex items-center gap-3">
