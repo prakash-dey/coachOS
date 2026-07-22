@@ -13,6 +13,19 @@ const PHOTO_FIELDS = [
   { formField: "backPhoto", fileName: "back.webp" },
 ] as const;
 
+export type CheckInActionResult = {
+  status: "error";
+  message: string;
+};
+
+const checkInErrors = {
+  invalidInput: "Check your measurements, ratings, and photos, then try again.",
+  profileError: "We could not load your client profile.",
+  alreadySubmitted: "You already submitted a check-in for this week.",
+  uploadFailed: "We could not upload your progress photos. Please check the files and try again.",
+  submitFailed: "We could not submit your check-in. Please try again.",
+} as const;
+
 const MEASUREMENT_LIMITS = {
   weightKg: { min: 20, max: 500 },
   waistCm: { min: 30, max: 250 },
@@ -38,7 +51,9 @@ function getCurrentMondayUtc() {
   return monday.toISOString().slice(0, 10);
 }
 
-export async function submitCheckIn(formData: FormData) {
+export async function submitCheckIn(
+  formData: FormData,
+): Promise<CheckInActionResult> {
   const getTextValue = (fieldName: string) => {
     const value = formData.get(fieldName);
     return typeof value === "string" ? value.trim() : "";
@@ -101,7 +116,7 @@ export async function submitCheckIn(formData: FormData) {
     notes.length > 3000 ||
     photoIsInvalid
   ) {
-    redirect("/client/check-ins/new?error=invalid_input");
+    return { status: "error", message: checkInErrors.invalidInput };
   }
 
   const supabase = await createClient();
@@ -138,7 +153,7 @@ export async function submitCheckIn(formData: FormData) {
     .maybeSingle();
 
   if (clientError || !client) {
-    redirect("/client/check-ins/new?error=profile_error");
+    return { status: "error", message: checkInErrors.profileError };
   }
 
   const weekStart = getCurrentMondayUtc();
@@ -152,11 +167,11 @@ export async function submitCheckIn(formData: FormData) {
       .maybeSingle();
 
   if (existingCheckInError) {
-    redirect("/client/check-ins/new?error=submit_failed");
+    return { status: "error", message: checkInErrors.submitFailed };
   }
 
   if (existingCheckIn) {
-    redirect("/client/check-ins/new?error=already_submitted");
+    return { status: "error", message: checkInErrors.alreadySubmitted };
   }
 
   const photoPaths = PHOTO_FIELDS.map(({ formField, fileName }) => ({
@@ -177,7 +192,7 @@ export async function submitCheckIn(formData: FormData) {
       .from(PHOTO_BUCKET)
       .upload(path, photo, {
         contentType: "image/webp",
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) {
@@ -185,7 +200,7 @@ export async function submitCheckIn(formData: FormData) {
         await supabase.storage.from(PHOTO_BUCKET).remove(uploadedPaths);
       }
 
-      redirect("/client/check-ins/new?error=photo_upload_failed");
+      return { status: "error", message: checkInErrors.uploadFailed };
     }
 
     uploadedPaths.push(path);
@@ -219,10 +234,10 @@ export async function submitCheckIn(formData: FormData) {
       .remove(uploadedPaths);
 
     if (insertError.code === "23505") {
-      redirect("/client/check-ins/new?error=already_submitted");
+      return { status: "error", message: checkInErrors.alreadySubmitted };
     }
 
-    redirect("/client/check-ins/new?error=submit_failed");
+    return { status: "error", message: checkInErrors.submitFailed };
   }
 
   revalidatePath("/client/check-ins");

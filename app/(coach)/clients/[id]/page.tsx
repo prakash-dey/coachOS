@@ -16,6 +16,32 @@ type ClientDetailPageProps = {
   }>;
 };
 
+type ClientDetail = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  gender?: string | null;
+  status: "active" | "paused" | "archived";
+  timezone: string;
+  created_at: string;
+  workout_plan_assignments: Array<{
+    id: string;
+    status: string;
+    starts_on: string;
+    ends_on: string | null;
+    workout_plans: unknown;
+  }>;
+  nutrition_plan_assignments: Array<{
+    id: string;
+    status: string;
+    starts_on: string;
+    ends_on: string | null;
+    nutrition_plans: unknown;
+  }>;
+};
+
 function humanize(value: string | number | null | undefined) {
   if (value === null || value === undefined || value === "") return "—";
   return String(value).replaceAll("_", " ");
@@ -35,7 +61,20 @@ function tableIsMissing(error: { code?: string; message?: string } | null) {
     error.message?.toLowerCase().includes("could not find the table");
 }
 
-function createDemoIntake(client: { first_name: string; last_name: string; gender: string | null; created_at: string }) {
+function genderColumnIsMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("gender") ||
+    message.includes("schema cache")
+  );
+}
+
+function createDemoIntake(client: { first_name: string; last_name: string; gender?: string | null; created_at: string }) {
   const seed = Array.from(`${client.first_name}${client.last_name}`).reduce(
     (total, character) => total + character.charCodeAt(0),
     0,
@@ -88,6 +127,7 @@ function createDemoIntake(client: { first_name: string; last_name: string; gende
     front_photo_path: photos.front,
     side_photo_path: photos.side,
     back_photo_path: photos.back,
+    document_pdf_path: null,
     notes: "Generated demo intake for UI preview and testing.",
   };
 }
@@ -129,7 +169,7 @@ export default async function ClientDetailPage({
     redirect("/onboarding");
   }
 
-  const { data: client, error: clientError } = await supabase
+  const clientResult = await supabase
     .from("clients")
     .select(
       "id, first_name, last_name, email, phone, gender, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(name, duration_weeks))",
@@ -137,6 +177,24 @@ export default async function ClientDetailPage({
     .eq("id", id)
     .eq("workspace_id", workspace.id)
     .maybeSingle();
+  let client = clientResult.data as ClientDetail | null;
+  let clientError = clientResult.error;
+
+  if (genderColumnIsMissing(clientError)) {
+    const fallbackResult = await supabase
+      .from("clients")
+      .select(
+        "id, first_name, last_name, email, phone, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(name, duration_weeks))",
+      )
+      .eq("id", id)
+      .eq("workspace_id", workspace.id)
+      .maybeSingle();
+
+    client = fallbackResult.data
+      ? { ...fallbackResult.data, gender: "other" }
+      : null;
+    clientError = fallbackResult.error;
+  }
 
   if (clientError) {
     throw new Error("Unable to load the client.");
@@ -189,6 +247,14 @@ export default async function ClientDetailPage({
           };
         }),
       );
+
+  const documentUrl =
+    !workspace.is_demo && displayIntake?.document_pdf_path
+      ? await supabase.storage
+          .from("client-onboarding-documents")
+          .createSignedUrl(displayIntake.document_pdf_path, 60 * 10)
+      : null;
+  const medicalReportUrl = documentUrl?.data?.signedUrl ?? null;
 
   const createdDate = new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
@@ -260,8 +326,8 @@ export default async function ClientDetailPage({
           {[
             ["Email", client.email ?? "Not provided"],
             ["Phone", client.phone ?? "Not provided"],
+            ["Gender", humanize(client.gender)],
             ["Timezone", client.timezone],
-            ["Added", createdDate],
           ].map(([label, value]) => (
             <Card key={label} className="p-5">
               <dt className="text-xs font-bold uppercase tracking-[0.14em] text-muted">{label}</dt>
@@ -309,6 +375,16 @@ export default async function ClientDetailPage({
                 </div>
 
                 <div className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <article className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+                      <p className="text-xs text-muted">Confirmed name</p>
+                      <p className="mt-1 font-semibold">{client.first_name} {client.last_name}</p>
+                    </article>
+                    <article className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+                      <p className="text-xs text-muted">Gender</p>
+                      <p className="mt-1 font-semibold capitalize">{humanize(client.gender)}</p>
+                    </article>
+                  </div>
                   <article className="rounded-2xl bg-brand-strong p-6 text-white shadow-card">
                     <p className="text-xs font-bold uppercase tracking-[.16em] text-white/55">Primary goal</p>
                     <p className="mt-3 text-2xl font-semibold leading-tight">{displayIntake.primary_goal}</p>
@@ -371,6 +447,25 @@ export default async function ClientDetailPage({
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Medical history</dt><dd className="mt-1 leading-6">{displayIntake.medical_history}</dd></div>
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Injuries / limitations</dt><dd className="mt-1 leading-6">{displayIntake.injuries_or_limitations}</dd></div>
                       <div><dt className="text-xs font-semibold uppercase tracking-wider text-muted">Medications</dt><dd className="mt-1 font-medium">{displayIntake.medications ?? "—"}</dd></div>
+                      <div>
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-muted">Medical reports</dt>
+                        <dd className="mt-1 font-medium">
+                          {medicalReportUrl ? (
+                            <a
+                              href={medicalReportUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-brand underline decoration-brand/30 underline-offset-4"
+                            >
+                              Open uploaded PDF
+                            </a>
+                          ) : displayIntake.document_pdf_path ? (
+                            "Uploaded, but the link is temporarily unavailable"
+                          ) : (
+                            "Not uploaded"
+                          )}
+                        </dd>
+                      </div>
                       <div className="rounded-2xl border border-border bg-surface-muted p-3"><dt className="text-xs text-muted">Emergency contact</dt><dd className="mt-1 font-semibold">{displayIntake.emergency_contact_name} · {displayIntake.emergency_contact_phone}</dd></div>
                     </dl>
                   </article>

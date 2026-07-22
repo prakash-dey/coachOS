@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ChangeEventHandler, type ReactNode } from "react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 
@@ -16,6 +16,7 @@ export const ALLOWED_IMAGE_TYPES = new Set([
 
 export const MAX_ORIGINAL_PHOTO_SIZE = 15 * 1024 * 1024;
 export const MAX_COMPRESSED_PHOTO_SIZE = 900 * 1024;
+export const MAX_ONBOARDING_PDF_SIZE = 5 * 1024 * 1024;
 
 export type PhotoFieldName = "frontPhoto" | "sidePhoto" | "backPhoto";
 
@@ -189,6 +190,7 @@ export function TextInputField({
   label,
   hint,
   placeholder,
+  defaultValue,
   required = false,
   type = "text",
   minLength,
@@ -198,6 +200,7 @@ export function TextInputField({
   label: string;
   hint?: string;
   placeholder?: string;
+  defaultValue?: string;
   required?: boolean;
   type?: "text" | "tel";
   minLength?: number;
@@ -212,8 +215,37 @@ export function TextInputField({
         minLength={minLength}
         maxLength={maxLength}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         required={required}
       />
+    </Field>
+  );
+}
+
+export function PdfUploadField({
+  name,
+  label,
+  hint,
+  disabled,
+}: Readonly<{
+  name: string;
+  label: string;
+  hint: string;
+  disabled: boolean;
+}>) {
+  return (
+    <Field label={label} htmlFor={name} hint={hint}>
+      <Input
+        id={name}
+        name={name}
+        type="file"
+        accept="application/pdf,.pdf"
+        disabled={disabled}
+        className="block text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand hover:file:bg-brand/15"
+      />
+      <p className="mt-2 text-xs text-muted">
+        Optional. PDF only, maximum 5 MB. Active PDF content is rejected for safety.
+      </p>
     </Field>
   );
 }
@@ -294,6 +326,8 @@ export function SelectField({
   hint,
   placeholder,
   options,
+  defaultValue = "",
+  onChange,
   required = false,
   optionalPlaceholder = false,
 }: Readonly<{
@@ -302,12 +336,20 @@ export function SelectField({
   hint?: string;
   placeholder: string;
   options: SelectOption[];
+  defaultValue?: string;
+  onChange?: ChangeEventHandler<HTMLSelectElement>;
   required?: boolean;
   optionalPlaceholder?: boolean;
 }>) {
   return (
     <Field label={label} htmlFor={name} hint={hint} required={required}>
-      <Select id={name} name={name} defaultValue="" required={required}>
+      <Select
+        id={name}
+        name={name}
+        defaultValue={defaultValue}
+        required={required}
+        onChange={onChange}
+      >
         <option value="" disabled={!optionalPlaceholder}>
           {placeholder}
         </option>

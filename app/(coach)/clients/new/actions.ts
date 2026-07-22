@@ -6,6 +6,19 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeClientGender } from "@/lib/client-gender";
 
+function genderColumnIsMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("gender") ||
+    message.includes("schema cache")
+  );
+}
+
 export async function createNewClient(formData: FormData) {
   const getTextValue = (fieldName: string) => {
     const value = formData.get(fieldName);
@@ -14,6 +27,7 @@ export async function createNewClient(formData: FormData) {
 
   const firstName = getTextValue("firstName");
   const lastName = getTextValue("lastName");
+  const email = getTextValue("email").toLowerCase();
   const phone = getTextValue("phone");
   const gender = normalizeClientGender(getTextValue("gender"));
 
@@ -23,10 +37,13 @@ export async function createNewClient(formData: FormData) {
     lastName.length < 1 ||
     lastName.length > 100;
 
-  const phoneIsInvalid =
-    phone.length > 0 && (phone.length < 3 || phone.length > 32);
+  const emailIsInvalid =
+    email.length > 0 &&
+    (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 
-  if (nameIsInvalid || phoneIsInvalid) {
+  const phoneIsInvalid = phone.length < 3 || phone.length > 32;
+
+  if (nameIsInvalid || emailIsInvalid || phoneIsInvalid) {
     redirect("/clients/new?error=invalid_input");
   }
 
@@ -55,18 +72,39 @@ export async function createNewClient(formData: FormData) {
     redirect("/onboarding");
   }
 
-  const { data: client, error: insertError } = await supabase
+  const insertPayload = {
+    workspace_id: workspace.id,
+    first_name: firstName,
+    last_name: lastName,
+    email: email || null,
+    phone,
+    gender,
+  };
+
+  const insertResult = await supabase
     .from("clients")
-    .insert({
-      workspace_id: workspace.id,
-      first_name: firstName,
-      last_name: lastName,
-      email: null,
-      phone: phone || null,
-      gender,
-    })
+    .insert(insertPayload)
     .select("id")
     .single();
+  let client = insertResult.data;
+  let insertError = insertResult.error;
+
+  if (genderColumnIsMissing(insertError)) {
+    const fallbackResult = await supabase
+      .from("clients")
+      .insert({
+        workspace_id: workspace.id,
+        first_name: firstName,
+        last_name: lastName,
+        email: email || null,
+        phone,
+      })
+      .select("id")
+      .single();
+
+    client = fallbackResult.data;
+    insertError = fallbackResult.error;
+  }
 
   if (insertError || !client) {
     redirect("/clients/new?error=create_failed");

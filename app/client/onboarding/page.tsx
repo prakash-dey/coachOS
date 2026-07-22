@@ -11,6 +11,19 @@ type ClientOnboardingPageProps = {
   }>;
 };
 
+function genderColumnIsMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("gender") ||
+    message.includes("schema cache")
+  );
+}
+
 export default async function ClientOnboardingPage({
   searchParams,
 }: ClientOnboardingPageProps) {
@@ -41,12 +54,28 @@ export default async function ClientOnboardingPage({
     redirect("/auth/continue");
   }
 
-  const { data: client, error: clientError } = await supabase
+  const clientResult = await supabase
     .from("clients")
-    .select("id, first_name, gender")
+    .select("id, first_name, last_name, gender")
     .eq("workspace_id", membership.workspace_id)
     .eq("user_id", user.id)
     .maybeSingle();
+  let client = clientResult.data as { id: string; first_name: string; last_name?: string | null; gender?: string | null } | null;
+  let clientError = clientResult.error;
+
+  if (genderColumnIsMissing(clientError)) {
+    const fallbackResult = await supabase
+      .from("clients")
+      .select("id, first_name, last_name")
+      .eq("workspace_id", membership.workspace_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    client = fallbackResult.data
+      ? { ...fallbackResult.data, gender: "other" }
+      : null;
+    clientError = fallbackResult.error;
+  }
 
   if (clientError || !client) {
     redirect("/auth/continue");
@@ -73,7 +102,7 @@ export default async function ClientOnboardingPage({
       : query.error === "profile_error"
         ? "We could not load your client profile."
         : query.error === "photo_upload_failed"
-          ? "We could not upload your photos. Please try again."
+          ? "We could not upload your photos or medical reports. Please check the files and try again."
           : query.error === "submit_failed"
             ? "We could not save your onboarding details. Please try again."
             : null;
@@ -96,7 +125,11 @@ export default async function ClientOnboardingPage({
           <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
 
-        <ClientOnboardingForm gender={client.gender ?? "other"} />
+        <ClientOnboardingForm
+          firstName={client.first_name}
+          lastName={client.last_name ?? ""}
+          gender={client.gender ?? "other"}
+        />
       </section>
     </main>
   );
