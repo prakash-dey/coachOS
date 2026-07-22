@@ -10,8 +10,9 @@ async function coachContext() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const { data: workspace } = await supabase.from("workspaces").select("id").eq("owner_id", user.id).maybeSingle();
+  const { data: workspace } = await supabase.from("workspaces").select("id, is_demo, approval_status").eq("owner_id", user.id).maybeSingle();
   if (!workspace) redirect("/onboarding");
+  if (!workspace.is_demo && workspace.approval_status !== "approved") redirect("/dashboard");
   return { supabase, user, workspace };
 }
 

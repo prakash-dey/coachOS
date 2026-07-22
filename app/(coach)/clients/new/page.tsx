@@ -51,6 +51,8 @@ export default async function NewClientPage({
         ? "We could not access your workspace."
         : params.error === "create_failed"
           ? "We could not create the client. Please try again."
+          : params.error === "approval_pending"
+            ? "Your workspace must be approved by a super admin before you can add clients."
           : null;
 
   return (
