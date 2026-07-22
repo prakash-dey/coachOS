@@ -8,15 +8,12 @@ import { signOut } from "@/app/auth/actions";
 import { Button } from "@/app/components/ui/Button";
 import { BrandLink } from "@/app/components/ui/Brand";
 import {
-  BellIcon,
   ClipboardCheckIcon,
   DashboardIcon,
   DumbbellIcon,
   Icon,
   LeafIcon,
   LogoutIcon,
-  SearchIcon,
-  SettingsIcon,
   TrendingUpIcon,
   UsersIcon,
   XIcon,
@@ -41,14 +38,6 @@ const navigation: NavItem[] = [
   { href: "/check-ins", label: "Check-ins", icon: <ClipboardCheckIcon className="h-5 w-5" /> },
   { href: "/progress", label: "Progress", icon: <TrendingUpIcon className="h-5 w-5" /> },
 ];
-
-function pageTitle(pathname: string) {
-  const match = navigation
-    .filter((item) => item.href)
-    .find((item) => item.href && (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))));
-
-  return match?.label ?? "CoachOS";
-}
 
 export default function CoachShell({ children, userEmail, workspaceName, isDemo, demoExpiresAt }: CoachShellProps) {
   const pathname = usePathname();
@@ -122,27 +111,6 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
           </div>
         )}
 
-        <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-border bg-surface/90 px-10 backdrop-blur lg:flex">
-          <h1 className="text-2xl font-bold tracking-[-0.04em] text-brand">
-            {pageTitle(pathname)}
-          </h1>
-          <div className="flex items-center gap-3">
-            <label className="flex h-10 w-72 items-center gap-2 rounded-full bg-surface-subtle px-4 text-sm text-muted transition focus-within:ring-2 focus-within:ring-brand/15">
-              <SearchIcon className="h-5 w-5" />
-              <span className="sr-only">Search clients</span>
-              <input style={{outline:"none"}} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-sm outline-none placeholder:text-muted/70 focus:border-transparent focus:outline-none focus:ring-0 focus-visible:outline-none" placeholder="Search clients..." />
-            </label>
-            <Link href="/notifications" aria-label="Notifications" title="Notifications" className="grid size-10 place-items-center rounded-full text-foreground transition hover:bg-surface-subtle">
-              <BellIcon className="h-5 w-5" />
-            </Link>
-            <Link href="/settings" aria-label="Settings" title="Settings" className="grid size-10 place-items-center rounded-full text-foreground transition hover:bg-surface-subtle">
-              <SettingsIcon className="h-5 w-5" />
-            </Link>
-            <div className="grid size-9 place-items-center rounded-full border-2 border-brand-soft bg-brand text-xs font-bold text-white">
-              {workspaceName.slice(0, 1).toUpperCase()}
-            </div>
-          </div>
-        </header>
         {isDemo && <div className="border-b border-[#d4b735] bg-[#fff4b8] px-4 py-2.5 text-center text-xs font-semibold text-[#624f0b]">Demo workspace · All people and data are fictional · Expires {demoExpiresAt ? new Date(demoExpiresAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Kolkata" }) : "soon"}</div>}
         <div className="min-h-[calc(100vh-4rem)]">{children}</div>
       </div>
