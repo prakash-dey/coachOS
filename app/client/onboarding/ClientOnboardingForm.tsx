@@ -148,7 +148,9 @@ export default function ClientOnboardingForm({
           hint="Used to show the right photo examples."
           placeholder="Select gender"
           defaultValue={selectedGender}
-          onChange={(event) => setSelectedGender(normalizeClientGender(event.currentTarget.value))}
+          onChange={(event) =>
+            setSelectedGender(normalizeClientGender(event.currentTarget.value))
+          }
           required
           options={[
             { value: "male", label: "Male" },
