@@ -14,7 +14,7 @@ export const getCoachContext = cache(async () => {
 
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
-    .select("id, name, is_demo, demo_expires_at")
+    .select("id, name, is_demo, demo_expires_at, approval_status, approval_note")
     .eq("owner_id", user.id)
     .maybeSingle();
 

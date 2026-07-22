@@ -28,10 +28,11 @@ async function context() {
   if (!user) redirect("/login");
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("id")
+    .select("id, is_demo, approval_status")
     .eq("owner_id", user.id)
     .maybeSingle();
   if (!workspace) redirect("/onboarding");
+  if (!workspace.is_demo && workspace.approval_status !== "approved") redirect("/dashboard");
   return { supabase, user, workspace };
 }
 

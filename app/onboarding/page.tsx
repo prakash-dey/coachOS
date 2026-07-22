@@ -57,11 +57,11 @@ export default async function OnboardingPage({
       <Card className="relative w-full max-w-md p-7 sm:p-9">
         <BrandLink />
         <h1 className="mt-8 text-3xl font-bold tracking-[-0.04em]">
-          Set up your coaching workspace
+          Submit your coaching workspace
         </h1>
 
         <p className="mt-3 text-muted">
-          Tell us who you are and what your workspace should be called.
+          Tell us who you are and what your workspace should be called. A super admin will review it before coaching operations are unlocked.
         </p>
 
         {errorMessage && (
@@ -93,7 +93,7 @@ export default async function OnboardingPage({
             />
           </Field>
 
-          <Button type="submit" className="w-full">Create workspace</Button>
+          <Button type="submit" className="w-full">Submit for review</Button>
         </form>
       </Card>
     </main>
