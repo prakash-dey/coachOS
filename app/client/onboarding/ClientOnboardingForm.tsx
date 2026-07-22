@@ -20,7 +20,11 @@ import {
 
 import { submitClientOnboarding } from "./actions";
 
-export default function ClientOnboardingForm() {
+export default function ClientOnboardingForm({
+  gender,
+}: Readonly<{
+  gender: string | null;
+}>) {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -97,6 +101,7 @@ export default function ClientOnboardingForm() {
             <PhotoUploadField
               key={guide.field}
               guide={guide}
+              gender={gender}
               disabled={isSubmitting}
             />
           ))}

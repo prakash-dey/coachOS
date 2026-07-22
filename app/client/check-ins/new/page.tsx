@@ -27,7 +27,7 @@ export default async function NewCheckInPage({
 
   const { data: membership, error: membershipError } = await supabase
     .from("workspace_members")
-    .select("role, status")
+    .select("workspace_id, role, status")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -37,6 +37,17 @@ export default async function NewCheckInPage({
     membership.role !== "client" ||
     membership.status !== "active"
   ) {
+    redirect("/auth/continue");
+  }
+
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id, gender")
+    .eq("workspace_id", membership.workspace_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (clientError || !client) {
     redirect("/auth/continue");
   }
 
@@ -71,7 +82,7 @@ export default async function NewCheckInPage({
           <Alert tone="error" className="mt-6">{errorMessage}</Alert>
         )}
 
-        <CheckInForm />
+        <CheckInForm gender={client.gender ?? "other"} />
       </section>
     </main>
   );

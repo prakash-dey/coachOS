@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { normalizeClientGender } from "@/lib/client-gender";
 
 export async function createNewClient(formData: FormData) {
   const getTextValue = (fieldName: string) => {
@@ -14,6 +15,7 @@ export async function createNewClient(formData: FormData) {
   const firstName = getTextValue("firstName");
   const lastName = getTextValue("lastName");
   const phone = getTextValue("phone");
+  const gender = normalizeClientGender(getTextValue("gender"));
 
   const nameIsInvalid =
     firstName.length < 1 ||
@@ -61,6 +63,7 @@ export async function createNewClient(formData: FormData) {
       last_name: lastName,
       email: null,
       phone: phone || null,
+      gender,
     })
     .select("id")
     .single();
