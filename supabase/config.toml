@@ -163,7 +163,12 @@ site_url = "http://localhost:3000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
   "http://localhost:3000/auth/callback",
-  "http://127.0.0.1:3000/auth/callback"
+  "http://127.0.0.1:3000/auth/callback",
+  # CoachOS mobile: standalone/dev-build deep link + Expo Go on this machine's
+  # current LAN IP (Expo Go always uses port 8081; re-add this if the LAN IP
+  # changes networks).
+  "coachos://auth/callback",
+  "exp://192.168.1.9:8081/--/auth/callback"
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
