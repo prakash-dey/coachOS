@@ -45,3 +45,19 @@ export async function rejectCoach(coachId: string, formData: FormData) {
   if (error) throw new Error("Unable to reject this coach.");
   revalidatePath("/super-admin");
 }
+
+export async function setCoachPaused(coachId: string, paused: boolean) {
+  if (!uuidPattern.test(coachId)) throw new Error("Invalid coach account.");
+  const supabase = await requireSuperAdmin();
+  const { error } = await supabase.rpc("set_coach_paused", { target_user_id: coachId, requested_paused: paused });
+  if (error) throw new Error(error.message || `Unable to ${paused ? "pause" : "resume"} this coach.`);
+  revalidatePath("/super-admin");
+}
+
+export async function deleteCoach(coachId: string) {
+  if (!uuidPattern.test(coachId)) throw new Error("Invalid coach account.");
+  const supabase = await requireSuperAdmin();
+  const { error } = await supabase.rpc("delete_coach_account", { target_user_id: coachId });
+  if (error) throw new Error(error.message || "Unable to delete this coach.");
+  revalidatePath("/super-admin");
+}
