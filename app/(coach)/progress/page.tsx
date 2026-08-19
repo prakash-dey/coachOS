@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { EmptyState, Page, PageHeader } from "@/app/components/ui/Layout";
 import { TrendingUpIcon } from "@/app/components/ui/Icons";
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 
 type ProgressClient = {
   id: string;
@@ -30,6 +31,7 @@ export default async function ProgressPage() {
     .from("workspaces")
     .select("id")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
 
   if (!workspace) redirect("/onboarding");

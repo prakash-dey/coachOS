@@ -7,6 +7,7 @@ import { ButtonLink } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Layout";
 import { demoCheckInPhotos, publicDemoPhotoUrl } from "@/lib/demo-assets";
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 
 const PHOTO_BUCKET = "check-in-photos";
 const expandedCheckInSelect =
@@ -138,6 +139,7 @@ export default async function CoachCheckInsPage({
     .from("workspaces")
     .select("id, is_demo")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
 
   if (workspaceError) {

@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-
-import { createClient } from "@/lib/supabase/server";
+import { getClientContext } from "@/lib/auth-context";
 
 type Exercise = {
   id: string;
@@ -41,17 +39,13 @@ function formatDate(value: string) {
 }
 
 export default async function ClientWorkoutPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: client } = await supabase.from("clients").select("id").eq("user_id", user.id).eq("status", "active").maybeSingle();
-  if (!client) redirect("/auth/continue");
+  const { supabase, client, workspace } = await getClientContext();
 
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from("workout_plan_assignments")
     .select("id, starts_on, ends_on, workout_plans(id, name, description, duration_weeks, workout_days(id, name, notes, position, workout_exercises(id, name, sets, reps, rest_seconds, tempo, target_load, notes, demo_url, position)))")
+    .eq("workspace_id", workspace.id)
     .eq("client_id", client.id)
     .eq("status", "active")
     .lte("starts_on", today)

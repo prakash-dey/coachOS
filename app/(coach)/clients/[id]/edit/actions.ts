@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 import { normalizeClientGender } from "@/lib/client-gender";
 
 function genderColumnIsMissing(error: { code?: string; message?: string } | null) {
@@ -89,6 +90,7 @@ export async function updateClient(
     .from("workspaces")
     .select("id")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
 
   if (workspaceError) {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
 import { Field, Input, Select } from "@/app/components/ui/FormControls";
@@ -34,6 +35,7 @@ export default async function NewClientPage({
     .from("workspaces")
     .select("id")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
 
   if (workspaceError) {

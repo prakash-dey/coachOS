@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 
 export type InvitationState = {
   status: "idle" | "success" | "error";
@@ -93,7 +94,8 @@ export async function createInvitation(
     const { data: workspace, error: workspaceError } = await supabase
       .from("workspaces")
       .select("id")
-      .eq("owner_id", user.id)
+    .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
       .maybeSingle();
 
     if (workspaceError || !workspace) {

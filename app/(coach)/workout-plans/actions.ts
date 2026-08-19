@@ -2,16 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 async function coachContext() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: workspace } = await supabase.from("workspaces").select("id, is_demo, approval_status").eq("owner_id", user.id).maybeSingle();
-  if (!workspace) redirect("/onboarding");
+  const { supabase, user, workspace } = await getCoachContext();
   if (!workspace.is_demo && workspace.approval_status !== "approved") redirect("/dashboard");
   return { supabase, user, workspace };
 }
@@ -21,15 +17,11 @@ export async function createWorkoutPlan(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const durationWeeks = Number(formData.get("durationWeeks"));
   if (!name || name.length > 120 || description.length > 5000 || !Number.isInteger(durationWeeks) || durationWeeks < 1 || durationWeeks > 104) redirect("/workout-plans/new?error=invalid");
-  const { supabase } = await coachContext();
-  const { data: planId, error } = await supabase.rpc("create_workout_plan", {
-    requested_name: name,
-    requested_description: description || null,
-    requested_duration_weeks: durationWeeks,
-  });
-  if (error || !planId) redirect("/workout-plans/new?error=create");
+  const { supabase, user, workspace } = await coachContext();
+  const { data: plan, error } = await supabase.from("workout_plans").insert({ workspace_id: workspace.id, name, description: description || null, duration_weeks: durationWeeks, created_by: user.id }).select("id").single();
+  if (error || !plan) redirect("/workout-plans/new?error=create");
   revalidatePath("/workout-plans");
-  redirect(`/workout-plans/${planId}`);
+  redirect(`/workout-plans/${plan.id}`);
 }
 
 export async function addWorkoutDay(planId: string, formData: FormData) {
