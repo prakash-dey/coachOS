@@ -143,17 +143,8 @@ export async function assignWorkoutPlan(planId: string, formData: FormData) {
   const clientId = String(formData.get("clientId") ?? "");
   const startsOn = String(formData.get("startsOn") ?? "");
   if (!uuidPattern.test(planId) || !uuidPattern.test(clientId) || !/^\d{4}-\d{2}-\d{2}$/.test(startsOn)) throw new Error("Invalid assignment.");
-  const { supabase, user, workspace } = await coachContext();
-  const { data: plan } = await supabase.from("workout_plans").select("duration_weeks").eq("id", planId).eq("workspace_id", workspace.id).eq("status", "active").maybeSingle();
-  if (!plan) throw new Error("Active plan not found.");
-  const endsOn = new Date(`${startsOn}T00:00:00Z`);
-  endsOn.setUTCDate(endsOn.getUTCDate() + plan.duration_weeks * 7 - 1);
-  const endsOnValue = endsOn.toISOString().slice(0, 10);
-  const { data: existing } = await supabase.from("workout_plan_assignments").select("id").eq("client_id", clientId).eq("workout_plan_id", planId).eq("status", "active").maybeSingle();
-  const mutation = existing
-    ? supabase.from("workout_plan_assignments").update({ starts_on: startsOn, ends_on: endsOnValue }).eq("id", existing.id).eq("workspace_id", workspace.id)
-    : supabase.from("workout_plan_assignments").insert({ workspace_id: workspace.id, client_id: clientId, workout_plan_id: planId, assigned_by: user.id, starts_on: startsOn, ends_on: endsOnValue });
-  const { error } = await mutation;
+  const { supabase } = await coachContext();
+  const { error } = await supabase.rpc("assign_workout_template", { target_template_id: planId, target_client_id: clientId, starts_on: startsOn });
   if (error) throw new Error("Unable to assign plan.");
   revalidatePath(`/workout-plans/${planId}`); revalidatePath(`/clients/${clientId}`);
 }

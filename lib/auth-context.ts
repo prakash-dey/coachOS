@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { getSelectedWorkspace } from "@/lib/workspace-context";
 
 export const getCoachContext = cache(async () => {
-  const { supabase, user, selected, available } = await getSelectedWorkspace("coach");
-  if (!selected) redirect(user.is_anonymous ? "/" : available.length ? "/workspaces" : "/onboarding");
+  const { supabase, user, selected, workspaces } = await getSelectedWorkspace("coach");
+  if (!selected) redirect(user.is_anonymous ? "/" : workspaces.length ? "/workspaces" : "/onboarding");
 
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
@@ -17,11 +17,11 @@ export const getCoachContext = cache(async () => {
   if (!workspace) redirect("/workspaces");
   if (workspace.is_demo && workspace.demo_expires_at && new Date(workspace.demo_expires_at) <= new Date()) redirect("/");
 
-  return { supabase, user, workspace };
+  return { supabase, user, workspace, workspaces };
 });
 
 export const getClientContext = cache(async () => {
-  const { supabase, user, selected } = await getSelectedWorkspace("client");
+  const { supabase, user, selected, workspaces } = await getSelectedWorkspace("client");
   if (!selected) redirect("/workspaces");
 
   const [{ data: workspace, error: workspaceError }, { data: client, error: clientError }] = await Promise.all([
@@ -33,5 +33,5 @@ export const getClientContext = cache(async () => {
   if (!workspace || !client || client.status !== "active") redirect("/workspaces");
   if (workspace.is_demo && workspace.demo_expires_at && new Date(workspace.demo_expires_at) <= new Date()) redirect("/");
 
-  return { supabase, user, workspace, client };
+  return { supabase, user, workspace, client, workspaces };
 });

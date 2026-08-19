@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { signOut } from "@/app/auth/actions";
-import { Button, ButtonLink } from "@/app/components/ui/Button";
+import { Button } from "@/app/components/ui/Button";
 import { BrandLink } from "@/app/components/ui/Brand";
 import {
   ClipboardCheckIcon,
@@ -19,11 +19,15 @@ import {
   XIcon,
 } from "@/app/components/ui/Icons";
 import { leaveDemo } from "@/app/demo/actions";
+import { WorkspaceSwitcher } from "@/app/components/WorkspaceSwitcher";
+import type { WorkspaceOption } from "@/lib/workspace-context";
 
 type CoachShellProps = Readonly<{
   children: React.ReactNode;
   userEmail: string;
   workspaceName: string;
+  workspaceId: string;
+  workspaces: WorkspaceOption[];
   isDemo: boolean;
   demoExpiresAt: string | null;
 }>;
@@ -39,7 +43,7 @@ const navigation: NavItem[] = [
   { href: "/progress", label: "Progress", icon: <TrendingUpIcon className="h-5 w-5" /> },
 ];
 
-export default function CoachShell({ children, userEmail, workspaceName, isDemo, demoExpiresAt }: CoachShellProps) {
+export default function CoachShell({ children, userEmail, workspaceName, workspaceId, workspaces, isDemo, demoExpiresAt }: CoachShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -51,8 +55,7 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
       </div>
 
       <div className="px-6 pb-4">
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-white/40">Workspace</p>
-        <p className="mt-2 truncate text-sm font-bold">{workspaceName}</p>
+        <WorkspaceSwitcher workspaces={workspaces} selectedId={workspaceId} canCreate={!isDemo} inverse />
         <p className="mt-1 truncate text-xs text-white/50">{userEmail}</p>
       </div>
 
@@ -79,9 +82,6 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
       </nav>
 
       <div className="border-t border-white/10 p-4">
-        <ButtonLink href="/workspaces" variant="ghost" className="mb-2 w-full justify-start rounded-lg px-3 text-white/75 shadow-none hover:translate-y-0 hover:bg-white/10 hover:text-white focus-visible:outline-accent">
-          Switch workspace
-        </ButtonLink>
         <form action={isDemo ? leaveDemo : signOut}>
           <Button type="submit" variant="ghost" pendingLabel={isDemo ? "Exiting…" : "Signing out…"} className="w-full justify-start rounded-lg px-3 text-white/75 shadow-none hover:translate-y-0 hover:bg-white/10 hover:text-white focus-visible:outline-accent">
             <LogoutIcon className="h-5 w-5" />{isDemo ? "Exit demo" : "Sign out"}
