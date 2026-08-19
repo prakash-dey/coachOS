@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Badge, EmptyState, Page, PageHeader, Surface } from "@/app/components/ui/Layout";
 import { ClipboardCheckIcon } from "@/app/components/ui/Icons";
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 
 type CheckInItem = {
   id: string;
@@ -61,6 +62,7 @@ export default async function CoachCheckInInbox() {
     .from("workspaces")
     .select("id")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
 
   if (!workspace) redirect("/onboarding");

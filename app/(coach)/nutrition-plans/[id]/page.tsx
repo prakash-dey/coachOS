@@ -5,6 +5,7 @@ import { Button } from "@/app/components/ui/Button";
 import { ConfirmSubmitButton } from "@/app/components/ui/ConfirmSubmitButton";
 import { UserMinusIcon } from "@/app/components/ui/Icons";
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 import NutritionMealsManager, { type NutritionMeal } from "./NutritionMealsManager";
 import NutritionPlanSettings from "./NutritionPlanSettings";
 import { assignNutritionPlan, removeClientFromNutrition, setNutritionStatus } from "../actions";
@@ -24,6 +25,7 @@ export default async function NutritionPlanPage({
     .from("workspaces")
     .select("id")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
   if (!workspace) redirect("/onboarding");
   const { data: plan } = await supabase

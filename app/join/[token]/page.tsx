@@ -64,7 +64,7 @@ export default async function JoinPage({
         : query.error === "authentication_failed"
           ? "Google sign-in could not be completed. Please try again."
         : query.error === "accept_failed"
-          ? "The invitation could not be accepted. Make sure this account is not already connected to another workspace."
+          ? "The invitation could not be accepted. It may be expired, revoked, or already connected to another account."
           : query.error === "invalid_invitation"
             ? "This invitation is invalid or has expired."
             : query.error === "invalid_email"

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import InviteClient from "./InviteClient";
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 import { previewDemoClient } from "@/app/demo/actions";
 import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { Badge, Card } from "@/app/components/ui/Layout";
@@ -159,6 +160,7 @@ export default async function ClientDetailPage({
     .from("workspaces")
     .select("id, is_demo")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
 
   if (workspaceError) {

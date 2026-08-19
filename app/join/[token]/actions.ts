@@ -1,8 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
+import { ACTIVE_WORKSPACE_COOKIE } from "@/lib/workspace-context";
 
 function tokenIsValid(token: string) {
   return /^[0-9a-f]{64}$/.test(token);
@@ -138,7 +140,7 @@ export async function acceptInvitation(
     redirect(`/join/${invitationToken}`);
   }
 
-  const { error } = await supabase.rpc(
+  const { data, error } = await supabase.rpc(
     "accept_client_invitation",
     {
       invitation_token: invitationToken,
@@ -148,6 +150,11 @@ export async function acceptInvitation(
   if (error) {
     redirect(`/join/${invitationToken}?error=accept_failed`);
   }
+
+  const accepted = data?.[0];
+  if (accepted?.accepted_workspace_id) (await cookies()).set(ACTIVE_WORKSPACE_COOKIE, accepted.accepted_workspace_id, {
+    httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 365,
+  });
 
   redirect("/client/onboarding");
 }

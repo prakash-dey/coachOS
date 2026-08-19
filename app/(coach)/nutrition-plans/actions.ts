@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 
 const uuid = /^[0-9a-f-]{36}$/i;
 const DEFAULT_NUTRITION_PLAN = {
@@ -21,17 +21,7 @@ const DEFAULT_NUTRITION_PLAN = {
 };
 
 async function context() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id, is_demo, approval_status")
-    .eq("owner_id", user.id)
-    .maybeSingle();
-  if (!workspace) redirect("/onboarding");
+  const { supabase, user, workspace } = await getCoachContext();
   if (!workspace.is_demo && workspace.approval_status !== "approved") redirect("/dashboard");
   return { supabase, user, workspace };
 }
@@ -103,34 +93,25 @@ export async function createNutritionPlan(formData: FormData) {
 
   if (invalidPlan) redirect("/nutrition-plans/new?error=invalid");
 
-  const { supabase } = await context();
-  const { data: planId, error } = await supabase.rpc("create_nutrition_plan", {
-    requested_name: name,
-    requested_description: description,
-    requested_daily_calories: daily_calories,
-    requested_protein_grams: protein_grams,
-    requested_carbs_grams: carbs_grams,
-    requested_fat_grams: fat_grams,
-    requested_duration_weeks: durationWeeks,
-    requested_fiber_grams: fiber_grams,
-    requested_water_liters: water_liters,
-    requested_dietary_preference: dietary_preference,
-    requested_allergies: allergies,
-    requested_foods_to_avoid: foods_to_avoid,
-  });
+  const { supabase, user, workspace } = await context();
+  const { data: plan, error } = await supabase.from("nutrition_plans").insert({
+    workspace_id: workspace.id, created_by: user.id, name, description,
+    daily_calories, protein_grams, carbs_grams, fat_grams, duration_weeks: durationWeeks,
+    fiber_grams, water_liters, dietary_preference, allergies, foods_to_avoid,
+  }).select("id").single();
 
-  if (error || !planId) {
+  if (error || !plan) {
     console.error("Unable to create nutrition plan", {
       code: error?.code,
       message: error?.message,
       details: error?.details,
       hint: error?.hint,
-      hasPlanId: Boolean(planId),
+      hasPlanId: Boolean(plan),
     });
     redirect("/nutrition-plans/new?error=create");
   }
   revalidatePath("/nutrition-plans");
-  redirect(`/nutrition-plans/${planId}`);
+  redirect(`/nutrition-plans/${plan.id}`);
 }
 
 export async function addMeal(planId: string, formData: FormData) {
