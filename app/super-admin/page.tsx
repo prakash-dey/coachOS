@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { signOut } from "@/app/auth/actions";
 import { BrandLink } from "@/app/components/ui/Brand";
@@ -26,6 +27,7 @@ type Account = {
   maximum_diet_template_creation: number | null;
   no_of_days_to_keep_user_photo_data: number | null;
 };
+type CoachOverview = { id: string; name: string | null; email: string | null; package: PackageName; paused: boolean; reviewedAt: string | null; lastSignInAt: string | null; lastActivityAt: string | null; workspaceCount: number; totalClients: number; activeClients: number; checkIns: number; limits: { workspaces: number; activeUsers: number; workoutTemplates: number; dietTemplates: number; photoDays: number } };
 
 export default async function SuperAdminPage() {
   const supabase = await createClient();
@@ -38,13 +40,14 @@ export default async function SuperAdminPage() {
   if (error) throw new Error("Unable to load coach accounts.");
   const accounts = (data ?? []) as Account[];
   const ids = accounts.map((account) => account.user_id);
-  const [{ data: profiles }, { data: workspaces }] = await Promise.all([
+  const [{ data: profiles }, { data: overviewData, error: overviewError }] = await Promise.all([
     ids.length ? supabase.from("profiles").select("id, full_name").in("id", ids) : Promise.resolve({ data: [] }),
-    ids.length ? supabase.from("workspaces").select("id, owner_id").in("owner_id", ids).eq("is_demo", false) : Promise.resolve({ data: [] }),
+    supabase.rpc("get_super_admin_coach_overview"),
   ]);
+  if (overviewError) throw new Error("Unable to load coach analytics.");
   const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
-  const workspaceCounts = new Map<string, number>();
-  for (const workspace of workspaces ?? []) workspaceCounts.set(workspace.owner_id, (workspaceCounts.get(workspace.owner_id) ?? 0) + 1);
+  const coachOverview = (Array.isArray(overviewData) ? overviewData : []) as CoachOverview[];
+  const overviewById = new Map(coachOverview.map((coach) => [coach.id, coach]));
 
   const pending = accounts.filter((account) => account.approval_status === "pending_review");
   const active = accounts.filter((account) => account.approval_status === "approved");
@@ -55,9 +58,9 @@ export default async function SuperAdminPage() {
     <header className="sticky top-0 z-30 border-b border-border bg-surface/90 backdrop-blur"><div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between px-4 sm:px-6"><BrandLink href="/super-admin" /><div className="flex items-center gap-3"><Badge tone="brand">Platform admin</Badge><form action={signOut}><Button type="submit" variant="secondary" size="sm">Sign out</Button></form></div></div></header>
     <Page>
       <PageHeader eyebrow="Super admin" title="Coach operations" description="Review new coaches, manage active accounts, and control package capacity from one place." />
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Active coaches" value={active.length - pausedCount} tone="brand" /><StatCard label="Awaiting approval" value={pending.length} tone="warm" /><StatCard label="Paused" value={pausedCount} tone="lavender" /><StatCard label="Rejected" value={rejected.length} /></div>
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Link href="#active-coaches" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-brand"><StatCard label="Active coaches" value={active.length - pausedCount} tone="brand" /></Link><Link href="#approval-queue" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-brand"><StatCard label="Awaiting approval" value={pending.length} tone="warm" /></Link><Link href="#active-coaches" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-brand"><StatCard label="Paused" value={pausedCount} tone="lavender" /></Link><Link href="#rejected-requests" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-brand"><StatCard label="Rejected" value={rejected.length} /></Link></div>
 
-      <section className="mt-10" aria-labelledby="approval-heading">
+      <section id="approval-queue" className="mt-10 scroll-mt-24" aria-labelledby="approval-heading">
         <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-warm">Approval queue</p><h2 id="approval-heading" className="mt-2 text-2xl font-bold tracking-tight">Current requests</h2><p className="mt-1 text-sm text-muted">Each approval follows a clear review, package, and confirmation flow.</p></div><Badge tone={pending.length ? "warning" : "success"}>{pending.length ? `${pending.length} waiting` : "Queue clear"}</Badge></div>
         <div className="mt-5 space-y-5">{pending.length === 0 ? <Card className="p-10 text-center"><span className="mx-auto grid size-12 place-items-center rounded-full bg-brand-soft text-xl text-brand">✓</span><h3 className="mt-4 text-lg font-bold">All caught up</h3><p className="mt-1 text-sm text-muted">New coach applications will appear here.</p></Card> : pending.map((account) => {
           const name = names.get(account.user_id) ?? "Coach profile";
@@ -66,10 +69,11 @@ export default async function SuperAdminPage() {
         })}</div>
       </section>
 
-      <section className="mt-12" aria-labelledby="active-heading">
+      <section id="active-coaches" className="mt-12 scroll-mt-24" aria-labelledby="active-heading">
         <div><p className="text-xs font-bold uppercase tracking-[.18em] text-warm">Account management</p><h2 id="active-heading" className="mt-2 text-2xl font-bold tracking-tight">All approved coaches</h2><p className="mt-1 text-sm text-muted">Pause access without losing data, upgrade packages, or permanently remove an account.</p></div>
-        <div className="mt-5 space-y-4">{active.length === 0 ? <Card className="p-10 text-center"><h3 className="text-lg font-bold">No approved coaches yet</h3></Card> : active.map((account) => <CoachManagementCard key={account.user_id} coach={{ id: account.user_id, name: names.get(account.user_id) ?? "Coach profile", package: account.package ?? "basic", paused: account.is_paused, workspaceCount: workspaceCounts.get(account.user_id) ?? 0, reviewedAt: account.reviewed_at, limits: { workspaces: account.maximum_workspace_creation ?? 3, activeUsers: account.maximum_active_user_allowed_in_one_workspace ?? 50, workoutTemplates: account.maximum_workout_template_creation ?? 100, dietTemplates: account.maximum_diet_template_creation ?? 100, photoDays: account.no_of_days_to_keep_user_photo_data ?? 200 } }} />)}</div>
+        <div className="mt-5 space-y-4">{active.length === 0 ? <Card className="p-10 text-center"><h3 className="text-lg font-bold">No approved coaches yet</h3></Card> : active.map((account) => { const analytics = overviewById.get(account.user_id); return <CoachManagementCard key={account.user_id} coach={{ id: account.user_id, name: analytics?.name ?? names.get(account.user_id) ?? "Coach profile", email: analytics?.email, package: account.package ?? "basic", paused: account.is_paused, workspaceCount: analytics?.workspaceCount ?? 0, totalClients: analytics?.totalClients, activeClients: analytics?.activeClients, checkIns: analytics?.checkIns, lastSignInAt: analytics?.lastSignInAt, lastActivityAt: analytics?.lastActivityAt, reviewedAt: account.reviewed_at, limits: analytics?.limits ?? { workspaces: account.maximum_workspace_creation ?? 3, activeUsers: account.maximum_active_user_allowed_in_one_workspace ?? 50, workoutTemplates: account.maximum_workout_template_creation ?? 100, dietTemplates: account.maximum_diet_template_creation ?? 100, photoDays: account.no_of_days_to_keep_user_photo_data ?? 200 } }} />; })}</div>
       </section>
+      <section id="rejected-requests" className="mt-12 scroll-mt-24" aria-labelledby="rejected-heading"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-warm">Request history</p><h2 id="rejected-heading" className="mt-2 text-2xl font-bold tracking-tight">Rejected requests</h2></div><div className="mt-5 overflow-hidden rounded-2xl border border-border bg-surface">{rejected.length === 0 ? <p className="p-6 text-sm text-muted">No rejected requests.</p> : rejected.map((account) => <div key={account.user_id} className="flex flex-col gap-2 border-b border-border p-5 last:border-0 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-bold">{names.get(account.user_id) ?? "Coach profile"}</p><p className="mt-1 text-sm text-muted">{account.review_note ?? "Rejected by platform review."}</p></div><Badge tone="danger">Rejected</Badge></div>)}</div></section>
     </Page>
   </div>;
 }
