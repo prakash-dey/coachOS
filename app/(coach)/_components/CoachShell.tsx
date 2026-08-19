@@ -19,11 +19,15 @@ import {
   XIcon,
 } from "@/app/components/ui/Icons";
 import { leaveDemo } from "@/app/demo/actions";
+import { WorkspaceSwitcher } from "@/app/components/WorkspaceSwitcher";
+import type { WorkspaceOption } from "@/lib/workspace-context";
 
 type CoachShellProps = Readonly<{
   children: React.ReactNode;
   userEmail: string;
   workspaceName: string;
+  workspaceId: string;
+  workspaces: WorkspaceOption[];
   isDemo: boolean;
   demoExpiresAt: string | null;
 }>;
@@ -39,7 +43,7 @@ const navigation: NavItem[] = [
   { href: "/progress", label: "Progress", icon: <TrendingUpIcon className="h-5 w-5" /> },
 ];
 
-export default function CoachShell({ children, userEmail, workspaceName, isDemo, demoExpiresAt }: CoachShellProps) {
+export default function CoachShell({ children, userEmail, workspaceName, workspaceId, workspaces, isDemo, demoExpiresAt }: CoachShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -51,8 +55,7 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
       </div>
 
       <div className="px-6 pb-4">
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-white/40">Workspace</p>
-        <p className="mt-2 truncate text-sm font-bold">{workspaceName}</p>
+        <WorkspaceSwitcher workspaces={workspaces} selectedId={workspaceId} canCreate={!isDemo} inverse />
         <p className="mt-1 truncate text-xs text-white/50">{userEmail}</p>
       </div>
 

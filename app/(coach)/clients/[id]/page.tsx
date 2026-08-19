@@ -174,7 +174,7 @@ export default async function ClientDetailPage({
   const clientResult = await supabase
     .from("clients")
     .select(
-      "id, first_name, last_name, email, phone, gender, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(name, duration_weeks))",
+      "id, first_name, last_name, email, phone, gender, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(id, name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(id, name, duration_weeks))",
     )
     .eq("id", id)
     .eq("workspace_id", workspace.id)
@@ -186,7 +186,7 @@ export default async function ClientDetailPage({
     const fallbackResult = await supabase
       .from("clients")
       .select(
-        "id, first_name, last_name, email, phone, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(name, duration_weeks))",
+        "id, first_name, last_name, email, phone, status, timezone, created_at, workout_plan_assignments(id, status, starts_on, ends_on, workout_plans(id, name, duration_weeks)), nutrition_plan_assignments(id, status, starts_on, ends_on, nutrition_plans(id, name, duration_weeks))",
       )
       .eq("id", id)
       .eq("workspace_id", workspace.id)
@@ -265,6 +265,7 @@ export default async function ClientDetailPage({
   const courseAccess = [
     ...client.workout_plan_assignments.map((assignment) => ({
       id: assignment.id,
+      planId: (assignment.workout_plans as unknown as { id: string } | null)?.id,
       type: "Workout",
       name: (assignment.workout_plans as unknown as { name: string; duration_weeks: number } | null)?.name ?? "Workout plan",
       durationWeeks: (assignment.workout_plans as unknown as { name: string; duration_weeks: number } | null)?.duration_weeks,
@@ -274,6 +275,7 @@ export default async function ClientDetailPage({
     })),
     ...client.nutrition_plan_assignments.map((assignment) => ({
       id: assignment.id,
+      planId: (assignment.nutrition_plans as unknown as { id: string } | null)?.id,
       type: "Nutrition",
       name: (assignment.nutrition_plans as unknown as { name: string; duration_weeks: number } | null)?.name ?? "Nutrition plan",
       durationWeeks: (assignment.nutrition_plans as unknown as { name: string; duration_weeks: number } | null)?.duration_weeks,
@@ -500,7 +502,7 @@ export default async function ClientDetailPage({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {courseAccess.map((course) => {
                 const expired = Boolean(course.endsOn && course.endsOn < new Date().toISOString().slice(0, 10));
-                return <article key={`${course.type}-${course.id}`} className={`rounded-2xl border bg-surface p-6 shadow-card ${course.type === "Workout" ? "border-brand" : "border-warm"}`}><div className="flex items-start justify-between gap-3"><div><p className={`w-fit rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${course.type === "Workout" ? "bg-brand-soft text-brand-soft-text" : "bg-warm-soft text-warm"}`}>{course.type}</p><h3 className="mt-3 font-bold">{course.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${expired ? "bg-red-50 text-red-700" : "bg-brand-soft text-brand-soft-text"}`}>{expired ? "Expired" : course.status}</span></div><dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-muted">Access period</dt><dd className="mt-1 font-medium">{course.durationWeeks ?? "—"} weeks</dd></div><div><dt className="text-xs text-muted">Ends</dt><dd className="mt-1 font-medium">{course.endsOn ?? "No expiry"}</dd></div></dl></article>;
+                return <article key={`${course.type}-${course.id}`} className={`rounded-2xl border bg-surface p-6 shadow-card ${course.type === "Workout" ? "border-brand" : "border-warm"}`}><div className="flex items-start justify-between gap-3"><div><p className={`w-fit rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${course.type === "Workout" ? "bg-brand-soft text-brand-soft-text" : "bg-warm-soft text-warm"}`}>{course.type}</p><h3 className="mt-3 font-bold">{course.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${expired ? "bg-red-50 text-red-700" : "bg-brand-soft text-brand-soft-text"}`}>{expired ? "Expired" : course.status}</span></div><dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-muted">Access period</dt><dd className="mt-1 font-medium">{course.durationWeeks ?? "—"} weeks</dd></div><div><dt className="text-xs text-muted">Ends</dt><dd className="mt-1 font-medium">{course.endsOn ?? "No expiry"}</dd></div></dl>{course.planId && <Link href={course.type === "Workout" ? `/workout-plans/${course.planId}` : `/nutrition-plans/${course.planId}`} className="mt-4 inline-flex text-sm font-bold text-brand">Customize for mentee →</Link>}</article>;
               })}
             </div>
           ) : <div className="mt-4 rounded-[1.5rem] border border-dashed border-border bg-surface p-6 text-sm text-muted">No workout or nutrition plans have been assigned yet.</div>}

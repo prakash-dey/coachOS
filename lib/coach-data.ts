@@ -20,7 +20,7 @@ export async function getDashboardSummary(workspaceId: string, weekStart: string
       .eq("workspace_id", workspaceId)
       .gte("week_start", weekStart)
       .order("submitted_at", { ascending: false }),
-    supabase.from("workout_plans").select("id, status").eq("workspace_id", workspaceId),
+    supabase.from("workout_plans").select("id, status").eq("workspace_id", workspaceId).eq("is_template", true),
   ]);
 
   return {
@@ -57,6 +57,7 @@ export async function getWorkoutPlanLibrary(workspaceId: string) {
     .from("workout_plans")
     .select("id, name, description, status, updated_at, workout_days(count), workout_plan_assignments(count)")
     .eq("workspace_id", workspaceId)
+    .eq("is_template", true)
     .order("updated_at", { ascending: false });
 
   if (error) throw new Error("Unable to load workout plans.");
@@ -73,6 +74,7 @@ export async function getNutritionPlanLibrary(workspaceId: string) {
     .from("nutrition_plans")
     .select("id, name, description, status, daily_calories, protein_grams, carbs_grams, fat_grams, nutrition_meals(count), nutrition_plan_assignments(count)")
     .eq("workspace_id", workspaceId)
+    .eq("is_template", true)
     .order("updated_at", { ascending: false });
 
   if (error) throw new Error("Unable to load nutrition plans.");

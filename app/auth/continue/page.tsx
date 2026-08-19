@@ -7,5 +7,5 @@ export default async function ContinuePage() {
   if (!workspaces.length) {
     redirect("/onboarding");
   }
-  redirect("/workspaces");
+  redirect(workspaces[0].role === "coach" ? "/dashboard" : "/client");
 }
