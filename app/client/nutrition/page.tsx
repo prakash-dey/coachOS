@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getClientContext } from "@/lib/auth-context";
 
 const itemMacros = (item: {
   calories: number | null;
@@ -17,22 +16,13 @@ const itemMacros = (item: {
     .join(" · ");
 
 export default async function ClientNutritionPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!client) redirect("/auth/continue");
+  const { supabase, client, workspace } = await getClientContext();
   const { data: assignment } = await supabase
     .from("nutrition_plan_assignments")
     .select(
       "starts_on, nutrition_plans(name, description, daily_calories, protein_grams, carbs_grams, fat_grams, fiber_grams, water_liters, dietary_preference, allergies, foods_to_avoid, nutrition_meals(id, name, timing, notes, position, nutrition_items(id, name, amount, alternatives, calories, protein_grams, carbs_grams, fat_grams, position)))",
     )
+    .eq("workspace_id", workspace.id)
     .eq("client_id", client.id)
     .eq("status", "active")
     .order("starts_on", { ascending: false })

@@ -1,20 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
-import { createClient } from "@/lib/supabase/server";
+import { getClientContext } from "@/lib/auth-context";
 
 export default async function ClientPortalPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
+  const { supabase, user, workspace } = await getClientContext();
 
   const { data: client } = await supabase
     .from("clients")
     .select("id, workspace_id, first_name, workout_plan_assignments(id, status, workout_plans(name)), nutrition_plan_assignments(id, status, nutrition_plans(name, daily_calories))")
+    .eq("workspace_id", workspace.id)
     .eq("user_id", user.id)
     .maybeSingle();
 

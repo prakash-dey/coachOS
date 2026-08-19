@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { ButtonLink } from "@/app/components/ui/Button";
 import { Alert } from "@/app/components/ui/Feedback";
 import { Card } from "@/app/components/ui/Layout";
 import { publicDemoPhotoUrl } from "@/lib/demo-assets";
+import { getClientContext } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/server";
 
 const PHOTO_BUCKET = "check-in-photos";
@@ -117,36 +117,12 @@ export default async function CheckInsPage({
   searchParams,
 }: CheckInsPageProps) {
   const query = await searchParams;
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authenticationError,
-  } = await supabase.auth.getUser();
-
-  if (authenticationError || !user) {
-    redirect("/login");
-  }
-
-  const { data: membership, error: membershipError } = await supabase
-    .from("workspace_members")
-    .select("workspace_id, role, status, workspaces(is_demo)")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (
-    membershipError ||
-    !membership ||
-    membership.role !== "client" ||
-    membership.status !== "active"
-  ) {
-    redirect("/auth/continue");
-  }
+  const { supabase, user, workspace } = await getClientContext();
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select("id, first_name")
-    .eq("workspace_id", membership.workspace_id)
+    .eq("workspace_id", workspace.id)
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -157,7 +133,7 @@ export default async function CheckInsPage({
   const expandedResult = await supabase
     .from("check_ins")
     .select(expandedCheckInSelect)
-    .eq("workspace_id", membership.workspace_id)
+    .eq("workspace_id", workspace.id)
     .eq("client_id", client.id)
     .order("week_start", { ascending: false })
     .limit(20);
@@ -168,7 +144,7 @@ export default async function CheckInsPage({
     const legacyResult = await supabase
       .from("check_ins")
       .select(legacyCheckInSelect)
-      .eq("workspace_id", membership.workspace_id)
+      .eq("workspace_id", workspace.id)
       .eq("client_id", client.id)
       .order("week_start", { ascending: false })
       .limit(20);
@@ -184,15 +160,13 @@ export default async function CheckInsPage({
   const normalizedCheckIns = (checkIns ?? []).map((checkIn) =>
     normalizeCheckIn(checkIn),
   );
-  const workspace = membership.workspaces as unknown as { is_demo: boolean } | null;
-
   const checkInsWithPhotos = await Promise.all(
     normalizedCheckIns.map(async (checkIn) => {
       const photoUrls = await createSignedPhotoUrls(supabase, [
         checkIn.front_photo_path ?? checkIn.progress_photo_path,
         checkIn.side_photo_path,
         checkIn.back_photo_path,
-      ], { isDemo: workspace?.is_demo ?? false });
+      ], { isDemo: workspace.is_demo });
 
       return {
         ...checkIn,

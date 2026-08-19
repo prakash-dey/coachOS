@@ -9,6 +9,7 @@ import {
   UserPlusIcon,
 } from "@/app/components/ui/Icons";
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 import WorkoutDaysManager from "./WorkoutDaysManager";
 import {
   assignWorkoutPlan,
@@ -79,6 +80,7 @@ export default async function WorkoutPlanPage({
     .from("workspaces")
     .select("id")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
   if (!workspace) redirect("/onboarding");
   const { data: plan, error: planError } = await supabase

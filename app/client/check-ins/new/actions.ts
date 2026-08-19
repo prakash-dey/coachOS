@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { getClientContext } from "@/lib/auth-context";
 
 const PHOTO_BUCKET = "check-in-photos";
 const MAX_PHOTO_SIZE = 900 * 1024;
@@ -119,36 +119,12 @@ export async function submitCheckIn(
     return { status: "error", message: checkInErrors.invalidInput };
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authenticationError,
-  } = await supabase.auth.getUser();
-
-  if (authenticationError || !user) {
-    redirect("/login");
-  }
-
-  const { data: membership, error: membershipError } = await supabase
-    .from("workspace_members")
-    .select("workspace_id, role, status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (
-    membershipError ||
-    !membership ||
-    membership.role !== "client" ||
-    membership.status !== "active"
-  ) {
-    redirect("/auth/continue");
-  }
+  const { supabase, user, workspace } = await getClientContext();
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select("id")
-    .eq("workspace_id", membership.workspace_id)
+    .eq("workspace_id", workspace.id)
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -176,7 +152,7 @@ export async function submitCheckIn(
 
   const photoPaths = PHOTO_FIELDS.map(({ formField, fileName }) => ({
     formField,
-    path: `${membership.workspace_id}/${user.id}/${client.id}/${weekStart}/${fileName}`,
+    path: `${workspace.id}/${user.id}/${client.id}/${weekStart}/${fileName}`,
     photo: formData.get(formField) as File,
   }));
 
@@ -209,7 +185,7 @@ export async function submitCheckIn(
   const { error: insertError } = await supabase
     .from("check_ins")
     .insert({
-      workspace_id: membership.workspace_id,
+      workspace_id: workspace.id,
       client_id: client.id,
       submitted_by: user.id,
       week_start: weekStart,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getClientContext } from "@/lib/auth-context";
 import { Alert } from "@/app/components/ui/Feedback";
 import CheckInForm from "./CheckInForm";
 
@@ -27,36 +27,12 @@ export default async function NewCheckInPage({
   searchParams,
 }: NewCheckInPageProps) {
   const query = await searchParams;
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authenticationError,
-  } = await supabase.auth.getUser();
-
-  if (authenticationError || !user) {
-    redirect("/login");
-  }
-
-  const { data: membership, error: membershipError } = await supabase
-    .from("workspace_members")
-    .select("workspace_id, role, status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (
-    membershipError ||
-    !membership ||
-    membership.role !== "client" ||
-    membership.status !== "active"
-  ) {
-    redirect("/auth/continue");
-  }
+  const { supabase, user, workspace } = await getClientContext();
 
   const clientResult = await supabase
     .from("clients")
     .select("id, gender")
-    .eq("workspace_id", membership.workspace_id)
+    .eq("workspace_id", workspace.id)
     .eq("user_id", user.id)
     .maybeSingle();
   let client = clientResult.data as { id: string; gender?: string | null } | null;
@@ -66,7 +42,7 @@ export default async function NewCheckInPage({
     const fallbackResult = await supabase
       .from("clients")
       .select("id")
-      .eq("workspace_id", membership.workspace_id)
+      .eq("workspace_id", workspace.id)
       .eq("user_id", user.id)
       .maybeSingle();
 
