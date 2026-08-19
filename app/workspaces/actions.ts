@@ -4,6 +4,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ACTIVE_WORKSPACE_COOKIE, getWorkspaceAccess } from "@/lib/workspace-context";
+import { createWorkspace as createApprovedWorkspace } from "@/app/onboarding/actions";
+
+export const createWorkspace = createApprovedWorkspace;
 
 export async function selectWorkspace(formData: FormData) {
   const workspaceId = formData.get("workspaceId");
