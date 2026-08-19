@@ -9,13 +9,15 @@ export const getCoachContext = cache(async () => {
 
   const [{ data: workspace, error: workspaceError }, { data: coachAccount }] = await Promise.all([
     supabase.from("workspaces").select("id, name, is_demo, demo_expires_at, approval_status, approval_note").eq("id", selected.id).single(),
-    supabase.from("coach_accounts").select("is_paused").eq("user_id", user.id).maybeSingle(),
+    supabase.from("coach_accounts").select("approval_status, is_paused").eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (workspaceError) throw new Error("Unable to load your workspace.");
   if (!workspace) redirect("/workspaces");
   if (workspace.is_demo && workspace.demo_expires_at && new Date(workspace.demo_expires_at) <= new Date()) redirect("/");
   if (!workspace.is_demo && coachAccount?.is_paused) redirect("/onboarding?status=paused");
+  if (!workspace.is_demo && coachAccount?.approval_status !== "approved") redirect("/onboarding");
+  if (!workspace.is_demo && workspace.approval_status !== "approved") redirect("/workspaces?error=unavailable");
 
   return { supabase, user, workspace, workspaces };
 });
