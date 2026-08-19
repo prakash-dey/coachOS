@@ -1,26 +1,37 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { getSelectedWorkspace } from "@/lib/workspace-context";
 
 export const getCoachContext = cache(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authenticationError,
-  } = await supabase.auth.getUser();
-
-  if (authenticationError || !user) redirect("/login");
+  const { supabase, user, selected, available } = await getSelectedWorkspace("coach");
+  if (!selected) redirect(user.is_anonymous ? "/" : available.length ? "/workspaces" : "/onboarding");
 
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
     .select("id, name, is_demo, demo_expires_at, approval_status, approval_note")
-    .eq("owner_id", user.id)
-    .maybeSingle();
+    .eq("id", selected.id)
+    .single();
 
   if (workspaceError) throw new Error("Unable to load your workspace.");
-  if (!workspace) redirect(user.is_anonymous ? "/" : "/onboarding");
+  if (!workspace) redirect("/workspaces");
   if (workspace.is_demo && workspace.demo_expires_at && new Date(workspace.demo_expires_at) <= new Date()) redirect("/");
 
   return { supabase, user, workspace };
+});
+
+export const getClientContext = cache(async () => {
+  const { supabase, user, selected } = await getSelectedWorkspace("client");
+  if (!selected) redirect("/workspaces");
+
+  const [{ data: workspace, error: workspaceError }, { data: client, error: clientError }] = await Promise.all([
+    supabase.from("workspaces").select("id, name, is_demo, demo_expires_at").eq("id", selected.id).single(),
+    supabase.from("clients").select("id, first_name, last_name, gender, status").eq("workspace_id", selected.id).eq("user_id", user.id).maybeSingle(),
+  ]);
+
+  if (workspaceError || clientError) throw new Error("Unable to load your client workspace.");
+  if (!workspace || !client || client.status !== "active") redirect("/workspaces");
+  if (workspace.is_demo && workspace.demo_expires_at && new Date(workspace.demo_expires_at) <= new Date()) redirect("/");
+
+  return { supabase, user, workspace, client };
 });

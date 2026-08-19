@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { getClientContext } from "@/lib/auth-context";
 import { normalizeClientGender } from "@/lib/client-gender";
 
 const PHOTO_BUCKET = "client-onboarding-photos";
@@ -174,36 +174,12 @@ export async function submitClientOnboarding(
     return { status: "error", message: onboardingErrors.invalidInput };
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authenticationError,
-  } = await supabase.auth.getUser();
-
-  if (authenticationError || !user) {
-    redirect("/login");
-  }
-
-  const { data: membership, error: membershipError } = await supabase
-    .from("workspace_members")
-    .select("workspace_id, role, status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (
-    membershipError ||
-    !membership ||
-    membership.role !== "client" ||
-    membership.status !== "active"
-  ) {
-    redirect("/auth/continue");
-  }
+  const { supabase, user, workspace } = await getClientContext();
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select("id")
-    .eq("workspace_id", membership.workspace_id)
+    .eq("workspace_id", workspace.id)
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -214,7 +190,7 @@ export async function submitClientOnboarding(
   const { data: existingIntake, error: existingIntakeError } = await supabase
     .from("client_intake_forms")
     .select("id")
-    .eq("workspace_id", membership.workspace_id)
+    .eq("workspace_id", workspace.id)
     .eq("client_id", client.id)
     .maybeSingle();
 
@@ -227,13 +203,13 @@ export async function submitClientOnboarding(
   }
 
   const photoPaths = {
-    front: `${membership.workspace_id}/${user.id}/${client.id}/front.webp`,
-    side: `${membership.workspace_id}/${user.id}/${client.id}/side.webp`,
-    back: `${membership.workspace_id}/${user.id}/${client.id}/back.webp`,
+    front: `${workspace.id}/${user.id}/${client.id}/front.webp`,
+    side: `${workspace.id}/${user.id}/${client.id}/side.webp`,
+    back: `${workspace.id}/${user.id}/${client.id}/back.webp`,
   };
   const hasMedicalReport = onboardingPdf instanceof File && onboardingPdf.size > 0;
   const documentPath = hasMedicalReport
-    ? `${membership.workspace_id}/${user.id}/${client.id}/medical-report.pdf`
+    ? `${workspace.id}/${user.id}/${client.id}/medical-report.pdf`
     : null;
 
   await supabase.storage
@@ -300,7 +276,7 @@ export async function submitClientOnboarding(
       gender,
     })
     .eq("id", client.id)
-    .eq("workspace_id", membership.workspace_id)
+    .eq("workspace_id", workspace.id)
     .eq("user_id", user.id);
 
   if (clientUpdateError) {
@@ -319,7 +295,7 @@ export async function submitClientOnboarding(
   const { error: insertError } = await supabase
     .from("client_intake_forms")
     .insert({
-      workspace_id: membership.workspace_id,
+      workspace_id: workspace.id,
       client_id: client.id,
       submitted_by: user.id,
       primary_goal: primaryGoal,

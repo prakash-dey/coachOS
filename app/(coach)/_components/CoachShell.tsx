@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { signOut } from "@/app/auth/actions";
-import { Button } from "@/app/components/ui/Button";
+import { Button, ButtonLink } from "@/app/components/ui/Button";
 import { BrandLink } from "@/app/components/ui/Brand";
 import {
   ClipboardCheckIcon,
@@ -79,6 +79,9 @@ export default function CoachShell({ children, userEmail, workspaceName, isDemo,
       </nav>
 
       <div className="border-t border-white/10 p-4">
+        <ButtonLink href="/workspaces" variant="ghost" className="mb-2 w-full justify-start rounded-lg px-3 text-white/75 shadow-none hover:translate-y-0 hover:bg-white/10 hover:text-white focus-visible:outline-accent">
+          Switch workspace
+        </ButtonLink>
         <form action={isDemo ? leaveDemo : signOut}>
           <Button type="submit" variant="ghost" pendingLabel={isDemo ? "Exiting…" : "Signing out…"} className="w-full justify-start rounded-lg px-3 text-white/75 shadow-none hover:translate-y-0 hover:bg-white/10 hover:text-white focus-visible:outline-accent">
             <LogoutIcon className="h-5 w-5" />{isDemo ? "Exit demo" : "Sign out"}

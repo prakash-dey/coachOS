@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
 import { demoCheckInPhotos, publicDemoPhotoUrl } from "@/lib/demo-assets";
 import { createClient } from "@/lib/supabase/server";
+import { getCoachContext } from "@/lib/auth-context";
 import { saveFeedback } from "./actions";
 const PHOTO_BUCKET = "check-in-photos";
 const expandedCheckInSelect =
@@ -117,6 +118,7 @@ export default async function ReviewCheckInPage({
     .from("workspaces")
     .select("id, is_demo")
     .eq("owner_id", user.id)
+    .eq("id", (await getCoachContext()).workspace.id)
     .maybeSingle();
   if (!workspace) redirect("/onboarding");
   const expandedResult = await supabase
